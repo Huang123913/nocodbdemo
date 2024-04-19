@@ -2914,6 +2914,53 @@ export type NestedListCopyPasteOrDeleteAllReqType = {
   fk_related_model_id: string;
 }[];
 
+/**
+ * Model for Kanban Column Request
+ */
+export interface KanbanColumnReqType {
+  /** Title */
+  title?: string;
+  /** Is this column shown? */
+  show?: BoolType;
+  /**
+   * Column Order
+   * @example 1
+   */
+  order?: number;
+}
+
+/**
+ * Model for Gallery Column Request
+ */
+export interface GalleryColumnReqType {
+  /** Show */
+  show?: BoolType;
+  /**
+   * Order
+   * @example 1
+   */
+  order?: number;
+}
+
+/**
+ * Model for Calendar Column Request
+ */
+export interface CalendarColumnReqType {
+  /** Is this column shown? */
+  show?: BoolType;
+  /** Is this column shown as bold? */
+  bold?: BoolType;
+  /** Is this column shown as italic? */
+  italic?: BoolType;
+  /** Is this column shown underlines? */
+  underline?: BoolType;
+  /**
+   * Column Order
+   * @example 1
+   */
+  order?: number;
+}
+
 import type {
   AxiosInstance,
   AxiosRequestConfig,

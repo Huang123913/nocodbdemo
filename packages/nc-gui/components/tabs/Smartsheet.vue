@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import type { ColumnType, LinkToAnotherRecordType, TableType } from 'nocodb-sdk'
-import { UITypes, isLinksOrLTAR } from 'nocodb-sdk'
-
 import type { TabItem } from '#imports'
 import {
   ActiveViewInj,
@@ -26,6 +23,8 @@ import {
   useRoles,
   useSqlEditor,
 } from '#imports'
+import type { ColumnType, LinkToAnotherRecordType, TableType } from 'nocodb-sdk'
+import { UITypes, isLinksOrLTAR } from 'nocodb-sdk'
 
 const props = defineProps<{
   activeTab: TabItem
@@ -163,37 +162,50 @@ const onDrop = async (event: DragEvent) => {
 watch([activeViewTitleOrId, activeTableId], () => {
   handleSidebarOpenOnMobileForNonViews()
 })
+
+const routeId = computed(() => {
+  const viewId = route.params.viewId as string
+  return viewId !== 'chatai'
+})
+const { openedProject } = storeToRefs(useBases())
 </script>
 
 <template>
   <div class="nc-container flex flex-col h-full" @drop="onDrop" @dragover.prevent>
     <LazySmartsheetTopbar />
-    <div style="height: calc(100% - var(--topbar-height))">
-      <div v-if="openedViewsTab === 'view'" class="flex flex-col h-full flex-1 min-w-0">
-        <LazySmartsheetToolbar v-if="!isForm" />
-        <div class="flex flex-row w-full" :style="{ height: isForm ? '100%' : 'calc(100% - var(--topbar-height))' }">
-          <Transition name="layout" mode="out-in">
-            <div v-if="openedViewsTab === 'view'" class="flex flex-1 min-h-0 w-3/4">
-              <div class="h-full flex-1 min-w-0 min-h-0 bg-white">
-                <LazySmartsheetGrid v-if="isGrid || !meta || !activeView" ref="grid" />
 
-                <template v-if="activeView && meta">
-                  <LazySmartsheetGallery v-if="isGallery" />
+    <div class="iframechatai" style="height: calc(100% - var(--topbar-height))">
+      <template v-if="routeId">
+        <div v-if="openedViewsTab === 'view'" class="flex flex-col h-full flex-1 min-w-0">
+          <LazySmartsheetToolbar v-if="!isForm" />
+          <div class="flex flex-row w-full" :style="{ height: isForm ? '100%' : 'calc(100% - var(--topbar-height))' }">
+            <Transition name="layout" mode="out-in">
+              <div v-if="openedViewsTab === 'view'" class="flex flex-1 min-h-0 w-3/4">
+                <div class="h-full flex-1 min-w-0 min-h-0 bg-white">
+                  <LazySmartsheetGrid v-if="isGrid || !meta || !activeView" ref="grid" />
 
-                  <LazySmartsheetForm v-else-if="isForm && !$route.query.reload" />
+                  <template v-if="activeView && meta">
+                    <LazySmartsheetGallery v-if="isGallery" />
 
-                  <LazySmartsheetKanban v-else-if="isKanban" />
+                    <LazySmartsheetForm v-else-if="isForm && !$route.query.reload" />
 
-                  <LazySmartsheetCalendar v-else-if="isCalendar" />
+                    <LazySmartsheetKanban v-else-if="isKanban" />
 
-                  <LazySmartsheetMap v-else-if="isMap" />
-                </template>
+                    <LazySmartsheetCalendar v-else-if="isCalendar" />
+
+                    <LazySmartsheetMap v-else-if="isMap" />
+                  </template>
+                </div>
               </div>
-            </div>
-          </Transition>
+            </Transition>
+          </div>
         </div>
-      </div>
-      <SmartsheetDetails v-else />
+        <SmartsheetDetails v-else />
+      </template>
+
+      <template v-else>
+        <iframe src="http://192.168.0.118:5173/" width="100%" height="100%" frameborder="0"></iframe>
+      </template>
     </div>
     <LazySmartsheetExpandedFormDetached />
   </div>

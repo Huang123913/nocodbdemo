@@ -20,6 +20,15 @@ const openedBaseUrl = computed(() => {
     isSharedBase: isSharedBase.value,
   })}`
 })
+
+const router = useRouter()
+const route = router.currentRoute
+
+const routeId = computed(() => {
+  const viewId = route.value.params.viewId as string
+
+  return viewId !== 'chatai'
+})
 </script>
 
 <template>
@@ -122,16 +131,15 @@ const openedBaseUrl = computed(() => {
       </div>
     </template>
 
-    <div v-if="!isMobileMode" class="pl-1.25 text-gray-500">/</div>
+    <div v-if="!isMobileMode && routeId" class="pl-1.25 text-gray-500">/</div>
 
     <template v-if="!(isMobileMode && activeView?.is_default)">
-      <LazyGeneralEmojiPicker v-if="isMobileMode" :emoji="activeView?.meta?.icon" readonly size="xsmall">
+      <LazyGeneralEmojiPicker v-if="isMobileMode && routeId" :emoji="activeView?.meta?.icon" readonly size="xsmall">
         <template #default>
           <GeneralViewIcon :meta="{ type: activeView?.type }" class="min-w-4.5 text-lg flex" />
         </template>
       </LazyGeneralEmojiPicker>
-
-      <SmartsheetToolbarOpenedViewAction />
+      <template v-if="routeId"><SmartsheetToolbarOpenedViewAction /></template>
     </template>
   </div>
 </template>

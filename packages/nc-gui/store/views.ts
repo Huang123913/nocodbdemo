@@ -1,9 +1,10 @@
+import { navigateToBlankTargetOpenOption, useMagicKeys } from '#imports'
 import type { FilterType, SortType, ViewType, ViewTypes } from 'nocodb-sdk'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { useTitle } from '@vueuse/core'
-import type { ViewPageType } from '~/lib'
-import { navigateToBlankTargetOpenOption, useMagicKeys } from '#imports'
 import { getFormattedViewTabTitle } from '~/helpers/parsers/parserHelpers'
+import type { ViewPageType } from '~/lib'
+
+import { useTitle } from '@vueuse/core'
 
 export const useViewsStore = defineStore('viewsStore', () => {
   const { $api } = useNuxtApp()
@@ -132,7 +133,8 @@ export const useViewsStore = defineStore('viewsStore', () => {
     force,
   }: { tableId?: string; ignoreLoading?: boolean; force?: boolean } = {}) => {
     tableId = tableId ?? tablesStore.activeTableId
-
+    console.log('tableId::', tableId)
+    if (tableId === 'chatai') return
     if (tableId) {
       if (!force && viewsByTable.value.get(tableId)) {
         viewsByTable.value.set(
@@ -204,7 +206,6 @@ export const useViewsStore = defineStore('viewsStore', () => {
 
       try {
         if (tablesStore.activeTable) tablesStore.activeTable.isViewsLoading = true
-
         await loadViews()
       } catch (e) {
         console.error(e)

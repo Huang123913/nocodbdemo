@@ -15,6 +15,11 @@ const { isMobileMode } = storeToRefs(useConfigStore())
 const { appInfo } = useGlobal()
 
 const isSharedBase = computed(() => route.value.params.typeOrId === 'base')
+
+const routeId = computed(() => {
+  const viewId = route.value.params.viewId as string
+  return viewId !== 'chatai'
+})
 </script>
 
 <template>
@@ -22,14 +27,14 @@ const isSharedBase = computed(() => route.value.params.typeOrId === 'base')
     class="nc-table-topbar h-20 py-1 flex gap-2 items-center border-b border-gray-200 overflow-hidden relative max-h-[var(--topbar-height)] min-h-[var(--topbar-height)] md:(pr-2 pl-2) xs:(px-1)"
     style="z-index: 7"
   >
-    <template v-if="isViewsLoading">
+    <template v-if="isViewsLoading && routeId">
       <a-skeleton-input :active="true" class="!w-44 !h-4 ml-2 !rounded overflow-hidden" />
     </template>
     <template v-else>
       <GeneralOpenLeftSidebarBtn />
       <LazySmartsheetToolbarViewInfo v-if="!isPublic" />
 
-      <div v-if="!isSharedBase && !isMobileMode">
+      <div v-if="!isSharedBase && !isMobileMode && routeId">
         <SmartsheetTopbarSelectMode />
       </div>
       <div class="flex-1" />

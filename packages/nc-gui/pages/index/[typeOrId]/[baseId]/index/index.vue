@@ -12,9 +12,9 @@ useSidebar('nc-left-sidebar')
 </script>
 
 <template>
-  <div class="h-full w-full nc-container">
-    <div class="h-full w-full flex flex-col">
-      <div class="w-full min-h-[300px] flex-auto">
+  <div class="h-full w-full nc-container 这里一样">
+    <div class="h-full w-full flex flex-col 这里一样">
+      <div class="w-full min-h-[300px] flex-auto 这里一样">
         <NuxtPage />
       </div>
     </div>
