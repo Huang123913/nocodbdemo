@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import type { SourceType, TableType } from 'nocodb-sdk'
 import dayjs from 'dayjs'
+import type { SourceType, TableType } from 'nocodb-sdk'
 import NcTooltip from '~/components/nc/Tooltip.vue'
 
 const { activeTables } = storeToRefs(useTablesStore())
 const { openTable } = useTablesStore()
 const { openedProject } = storeToRefs(useBases())
+const { refreshCommandPalette } = useCommandPalette()
 
 const { base } = useBase()
 
@@ -15,13 +16,18 @@ const isDataSourceLimitReached = computed(() => Number(openedProject.value?.sour
 
 const { isUIAllowed } = useRoles()
 
-const { $e } = useNuxtApp()
+const { $e, $api } = useNuxtApp()
+const { loadProjectTables, addTable } = useTablesStore()
 
 const isImportModalOpen = ref(false)
 
 const defaultBase = computed(() => {
   return openedProject.value?.sources?.[0]
 })
+
+const { addTab } = useTabs()
+
+const emit = defineEmits(['update:modelValue', 'create'])
 
 const sources = computed(() => {
   // Convert array of sources to map of sources
@@ -54,6 +60,8 @@ function openTableCreateDialog(baseIndex?: number | undefined) {
     'onUpdate:modelValue': () => closeDialog(),
   })
 
+  console.log('table::', { baseId: openedProject.value.id, sourceId })
+
   function closeDialog(table?: TableType) {
     isOpen.value = false
 
@@ -75,6 +83,42 @@ const onCreateBaseClick = () => {
   if (isDataSourceLimitReached.value) return
 
   isNewBaseModalOpen.value = true
+}
+
+const openChatAi = async () => {
+  // let sourceId = openedProject.value!.sources?.[0].id
+  let baseId = openedProject?.value.id ? openedProject?.value.id : ''
+  // const tableMeta = await $api.source.tableCreate(baseId, sourceId!, {
+  //   table_name: 'test6',
+  //   title: 'test6',
+  //   columns: [],
+  //   is_hybrid: true,
+  // })
+  // // let tableMeta = {
+  // //   id: 'chart' + Date.now(),
+  // //   title: '会话',
+  // //   base_id: baseId,
+  // //   source_id: sourceId,
+  // // }
+  // await addTab({
+  //   id: tableMeta.id as string,
+  //   title: tableMeta.title,
+  //   type: TabType.TABLE,
+  //   baseId: baseId,
+  // })
+
+  // addTable(baseId, tableMeta)
+  // await loadProjectTables(baseId, true)
+  // emit('create', tableMeta)
+  // refreshCommandPalette()
+  // await openTable(tableMeta)
+  // console.log('baseId::', baseId)
+  navigateTo({
+    path: `/nc/${baseId}/chatai`,
+    query: {
+      viewId: 'chatai',
+    },
+  })
 }
 </script>
 
@@ -127,7 +171,18 @@ const onCreateBaseClick = () => {
           <div class="label">{{ $t('labels.connectDataSource') }}</div>
         </div>
       </component>
+      <div
+        v-if="isUIAllowed('tableCreate')"
+        role="button"
+        class="nc-base-view-all-table-btn"
+        data-testid="proj-view-btn__add-new-table"
+        @click="openChatAi()"
+      >
+        <GeneralIcon icon="addOutlineBox" />
+        <div class="label">{{ $t('general.new') }} {{ $t('objects.table') }} By Ai</div>
+      </div>
     </div>
+
     <div
       v-if="base?.isLoading"
       class="flex items-center justify-center text-center"
@@ -191,6 +246,10 @@ const onCreateBaseClick = () => {
         </div>
       </div>
     </div>
+
+    <template>
+      <iframe ref="reactFrame" width="100%" height="500px" frameborder="0"></iframe>
+    </template>
 
     <ProjectImportModal v-if="defaultBase" v-model:visible="isImportModalOpen" :source="defaultBase" />
     <LazyDashboardSettingsDataSourcesCreateBase v-model:open="isNewBaseModalOpen" />
