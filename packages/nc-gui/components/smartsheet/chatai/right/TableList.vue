@@ -18,16 +18,16 @@ const { isGrid, isForm, isGallery, isKanban, isMap, isCalendar } = useSmartsheet
 </script>
 
 <template>
-  <div class="chatai-content">
-    <SmartsheetChataiLeftSessionList />
-    <SmartsheetChataiRightTableList />
-  </div>
+  <div class="table-list-content">table-list-content</div>
 </template>
 
 <style scoped lang="scss">
-.chatai-content {
-  width: 100%;
+.table-list-content {
+  width: 60%;
   height: 100%;
-  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 24px 14px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 </style>

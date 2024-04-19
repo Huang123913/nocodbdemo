@@ -167,7 +167,6 @@ const routeId = computed(() => {
   const viewId = route.params.viewId as string
   return viewId !== 'chatai'
 })
-const { openedProject } = storeToRefs(useBases())
 </script>
 
 <template>
@@ -204,7 +203,7 @@ const { openedProject } = storeToRefs(useBases())
       </template>
 
       <template v-else>
-        <iframe src="http://192.168.0.118:5173/" width="100%" height="100%" frameborder="0"></iframe>
+        <LazySmartsheetChatAi />
       </template>
     </div>
     <LazySmartsheetExpandedFormDetached />
