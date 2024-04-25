@@ -65,63 +65,61 @@ const noFieldsStr = computed(() => {
     </a>
     <template #overlay>
       <a-menu @click="handleMenuClick">
-        <li v-for="item in chataiData.checkedModelData">
-          <a-sub-menu
-            v-if="item.fields?.length"
-            :key="item.id"
-            :title="item.name_cn"
-            @titleClick="titleClickHandle"
-            @click="handleMenuClick"
-          >
-            <a-menu-item v-for="item1 in item?.fields" @click="handleMenuClick">
-              {{ item1.fieldLabel || item1.fieldName }}
-              <template #icon>
-                <a-button
-                  class="colse-btn close-btn1"
-                  @click="
-                    (e) => {
-                      e.stopPropagation()
-                      handleDeleteFile(item1, item.id)
-                    }
-                  "
-                  type="text"
-                >
-                  <!-- <template #icon><close-outlined /></template> -->
-                </a-button>
-              </template>
-            </a-menu-item>
-            <template #expandIcon
-              ><a-button
-                class="colse-btn"
-                @click="
-                  (e) => {
-                    e.stopPropagation()
-                    handleDeleteModelItem(item)
-                  }
-                "
-                type="text"
-              >
-                <template #icon><close-outlined /></template> </a-button
-            ></template>
-          </a-sub-menu>
-          <a-menu-item v-else>
-            {{ item.name_cn }}
+        <a-sub-menu
+          v-for="item in fieldsStr"
+          :key="item.id"
+          :title="item.name_cn"
+          @titleClick="titleClickHandle"
+          @click="handleMenuClick"
+        >
+          <a-menu-item v-for="item1 in item?.fields" @click="handleMenuClick">
+            {{ item1.fieldName || item1.fieldLabel }}
             <template #icon>
               <a-button
                 class="colse-btn close-btn1"
                 @click="
                   (e) => {
                     e.stopPropagation()
-                    handleDeleteModelItem(item)
+                    handleDeleteFile(item1, item.id)
                   }
                 "
                 type="text"
               >
-                <template #icon><close-outlined /></template>
+                <!-- <template #icon><close-outlined /></template> -->
               </a-button>
             </template>
           </a-menu-item>
-        </li>
+          <template #expandIcon
+            ><a-button
+              class="colse-btn"
+              @click="
+                (e) => {
+                  e.stopPropagation()
+                  handleDeleteModelItem(item)
+                }
+              "
+              type="text"
+            >
+              <template #icon><close-outlined /></template> </a-button
+          ></template>
+        </a-sub-menu>
+        <a-menu-item v-for="item in noFieldsStr">
+          {{ item.name_cn }}
+          <template #icon>
+            <a-button
+              class="colse-btn close-btn1"
+              @click="
+                (e) => {
+                  e.stopPropagation()
+                  handleDeleteModelItem(item)
+                }
+              "
+              type="text"
+            >
+              <template #icon><close-outlined /></template>
+            </a-button>
+          </template>
+        </a-menu-item>
       </a-menu>
     </template>
   </a-dropdown>
