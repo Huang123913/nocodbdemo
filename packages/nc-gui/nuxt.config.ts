@@ -209,14 +209,14 @@ export default defineNuxtConfig({
             return path
           },
         },
-        '/webapi': {
+        '/webapi/1': {
           target: 'http://databoard-test.yindangu.com',
           changeOrigin: true,
           rewrite: (path: any) => {
             return path
           },
         },
-        '/restapi': {
+        '/restapi/1': {
           target: 'http://databoard-test.yindangu.com',
           changeOrigin: true,
           rewrite: (path: any) => {

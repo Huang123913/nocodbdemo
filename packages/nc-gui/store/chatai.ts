@@ -88,9 +88,33 @@ export const useChataiStore = defineStore('chataiStore', () => {
     catalog: [],
   })
 
+  const exeTrain = async (bizCatalogEntityCustom: any[]) => {
+    for (let i = 0; i < bizCatalogEntityCustom.length; i++) {
+      if (bizCatalogEntityCustom[i].isCatalog) {
+      } else {
+        let generateDDL = await axios.post(
+          'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/generateDDL',
+          {
+            entityIds: bizCatalogEntityCustom[i].id,
+            detail: false,
+          },
+        )
+        let ddl = generateDDL?.data?.data?.ddl
+        if (ddl) {
+          let ddlString = ddl?.join('\\')
+          await axios.post(
+            `https://c538-14-123-253-17.ngrok-free.app/api/v0/train?ddl=${encodeURIComponent(ddlString)}&id=${
+              bizCatalogEntityCustom[i].id
+            }&orgid=1&projectid=1`,
+          )
+        }
+      }
+    }
+  }
+
   //获取模型数据
   const getCustomCatalogEntityTree = async () => {
-    let result = await axios.post('/webapi/ydg_vmcdm_custom_api/getCustomCatalogEntityTree', {
+    let result = await axios.post('http://databoard-test.yindangu.com/webapi/ydg_vmcdm_custom_api/getCustomCatalogEntityTree', {
       data: {
         customGroupId: null,
         customOwnerId: null,
@@ -109,6 +133,7 @@ export const useChataiStore = defineStore('chataiStore', () => {
             return { ...item, title: item.name_cn, key: item.id, children, fields: [] }
           })
       }
+      // exeTrain(bizCatalogEntityCustom)
       const treeData = buildTree(bizCatalogEntityCustom)
       chataiData.catalog = []
       bizCatalogEntityCustom.map((item) => {
@@ -118,7 +143,7 @@ export const useChataiStore = defineStore('chataiStore', () => {
       })
       chataiData.catalog = buildTree(chataiData.catalog)
       chataiData.modelDataList = treeData
-      console.log('模型目录::', chataiData.catalog)
+      console.log('模型目录1::', chataiData.catalog)
     }
   }
 

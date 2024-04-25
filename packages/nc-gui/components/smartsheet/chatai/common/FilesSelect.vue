@@ -37,18 +37,37 @@ const { chataiData } = storeToRefs(store)
 const { getCustomCatalogEntityTree, getCheckedModelData, setModelDataList, setCheckedModelData } = store
 const checkedValues = ref<string[]>([])
 const clicked = ref<boolean>(false)
+const isShowLoading = ref<boolean>(false)
 
-const handleLoadFiles = () => {
+const handleLoadFiles = async () => {
   if (showData.value.length) return
-  axios
-    .post('/webapi/innersysapi/VMcdmDataServiceWebApi/findBizCustomEntity', {
+  isShowLoading.value = true
+  clicked.value = false
+  await axios
+    .post('http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/findBizCustomEntity', {
       entityIds: props.modelItem?.id,
     })
     .then((res: any) => {
       showData.value = res?.data?.data?.datas[0].fields.map((item: any) => {
         return { ...item, value: item.fieldName, label: item.fieldName }
       })
+      isShowLoading.value = false
+      clicked.value = true
     })
+  // let generateDDL = await axios.post('/webapi/innersysapi/VMcdmDataServiceWebApi/generateDDL', {
+  //   entityIds: props.modelItem?.id,
+  //   detail: false,
+  // })
+  // let ddl = generateDDL?.data?.data?.ddl
+  // let ddlString = ddl?.join('\\')
+  // let data = new FormData()
+  // data.append('ddl', ddlString)
+  // data.append('id', props.modelItem?.id)
+  // data.append('orgid', 1)
+  // data.append('projectid', 1)
+
+  // await axios.post(`https://c538-14-123-253-17.ngrok-free.app/api/v0/train?ddl=${encodeURIComponent(ddlString)}`)
+  // await axios.post(`https://c538-14-123-253-17.ngrok-free.app/api/v0/train`)
 }
 
 const handleClickChange = (visible: boolean) => {
@@ -121,6 +140,7 @@ eventBus.on((event) => {
       
     </a-button> -->
   </a-popover>
+  <SmartsheetChataiCommonLoading :isShow="isShowLoading" />
 </template>
 
 <style lang="scss">

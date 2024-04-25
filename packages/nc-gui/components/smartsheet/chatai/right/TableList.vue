@@ -120,17 +120,23 @@ const handleOk = async (e: MouseEvent) => {
     },
   ]
   // 保存模型
-  let saveBizCustomEntity = await axios.post('/webapi/innersysapi/VMcdmDataServiceWebApi/saveBizCustomEntity', {
-    entities: entities,
-  })
+  let saveBizCustomEntity = await axios.post(
+    'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/saveBizCustomEntity',
+    {
+      entities: entities,
+    },
+  )
   let entity = saveBizCustomEntity?.data.data.data?.insert?.entity
   if (!entity) entity = saveBizCustomEntity?.data.data.data?.update?.entity
   if (entity) {
     let entityIds = entity.map((item) => item.id).join(',')
     // 发布模型
-    let generateMDTableResutl = await axios.post('/webapi/innersysapi/VMcdmDataServiceWebApi/generateMDTable', {
-      entityIds,
-    })
+    let generateMDTableResutl = await axios.post(
+      'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/generateMDTable',
+      {
+        entityIds,
+      },
+    )
     console.log('generateMDTableResutl::', generateMDTableResutl)
     let tableInfo = generateMDTableResutl?.data?.data?.tableInfo[0]
     if (tableInfo) {
@@ -138,29 +144,39 @@ const handleOk = async (e: MouseEvent) => {
         return { ...item, id: `${Date.now()}${index}` }
       })
       let batchInsertOrUpdate = await axios.post(
-        `/restapi/bizentity/data/${tableInfo.componentCode}/${tableInfo.tableName}/batchInsertOrUpdate`,
+        `http://databoard-test.yindangu.com/restapi/bizentity/data/${tableInfo.componentCode}/${tableInfo.tableName}/batchInsertOrUpdate`,
         {
           datas: datas,
         },
       )
     }
     // 生成ddl
-    let generateDDL = await axios.post('/webapi/innersysapi/VMcdmDataServiceWebApi/generateDDL', {
-      entityIds: entityIds,
-      detail: false,
-    })
+    let generateDDL = await axios.post(
+      'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/generateDDL',
+      {
+        entityIds: entityIds,
+        detail: false,
+      },
+    )
     let ddl = generateDDL?.data?.data?.ddl
     if (ddl) {
       let ddlString = ddl?.join('\\')
-      await axios.post('https://c538-14-123-253-17.ngrok-free.app/api/v0/train', {
-        question: chataiData.value.sessionItem?.textAreaValue,
-        id: chataiData.value.sessionItem.id,
-        orgid: 1,
-        projectid: 1,
-        sql: chataiData.value.sessionItem?.sql,
-        ddl: ddlString,
-        documentation: 1,
-      })
+      await axios.post(
+        `https://c538-14-123-253-17.ngrok-free.app/api/v0/train?ddl=${encodeURIComponent(ddlString)}&id=${
+          chataiData.value.sessionItem.id
+        }&orgid=1&projectid=1`,
+      )
+      await axios.post(
+        `https://c538-14-123-253-17.ngrok-free.app/api/v0/train?&id=${chataiData.value.sessionItem.id}&orgid=1&projectid=1&question=${chataiData.value.sessionItem?.tip}&sql=${chataiData.value.sessionItem?.sql}`,
+      )
+      // await axios.post('https://c538-14-123-253-17.ngrok-free.app/api/v0/train', {
+      //   question: chataiData.value.sessionItem?.textAreaValue,
+      //   id: chataiData.value.sessionItem.id,
+      //   orgid: 1,
+      //   projectid: 1,
+      //   sql: chataiData.value.sessionItem?.sql,
+      //   ddl: ddlString,
+      // })
     }
     await getCustomCatalogEntityTree()
   }
@@ -209,7 +225,7 @@ const handleEdit = (value: boolean) => {
     </div>
     <!-- 表格数据 -->
     <div class="table-data">
-      <a-table :pagination="false" class="ant-table-striped" :columns="columns" :data-source="tableData" />
+      <a-table :pagination="false" class="ant-table-striped" :columns="columns" :data-source="tableData" :scroll="{ y: 500 }" />
     </div>
     <a-modal v-model:visible="showModal" title="选择模型目录" @ok="handleOk" cancelText="取消" okText="确认">
       <a-tree

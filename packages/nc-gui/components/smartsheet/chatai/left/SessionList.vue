@@ -110,9 +110,12 @@ const handleSend = async () => {
   })
   if (result?.data) {
     let sql = result.data.text.replace(/;/g, '')
-    let queryBizCustomEntityData = await axios.post('/webapi/innersysapi/VMcdmDataServiceWebApi/queryBizCustomEntityData', {
-      sql,
-    })
+    let queryBizCustomEntityData = await axios.post(
+      'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/queryBizCustomEntityData',
+      {
+        sql,
+      },
+    )
     let resultData = queryBizCustomEntityData?.data?.data
     if (resultData) {
       let newSessionItem = {

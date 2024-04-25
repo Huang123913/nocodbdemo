@@ -75,8 +75,8 @@ onMounted(() => {
               <span class="menu-btn"> {{ $t('general.logout') }}</span>
             </div>
           </NcMenuItem>
-          <NcDivider />
-          <a
+          <!-- <NcDivider /> -->
+          <!-- <a
             v-e="['c:nocodb:discord']"
             href="https://discord.gg/5RgZmkW"
             target="_blank"
@@ -111,7 +111,7 @@ onMounted(() => {
               <GeneralIcon class="social-icon text-gray-500 group-hover:text-gray-800" icon="ncTwitter" />
               <span class="menu-btn"> {{ $t('labels.twitter') }} </span>
             </NcMenuItem>
-          </a>
+          </a> -->
           <template v-if="!appInfo.ee">
             <NcDivider />
             <a-popover key="language" class="lang-menu !py-1.5" placement="rightBottom">
@@ -137,9 +137,9 @@ onMounted(() => {
           </template>
 
           <template v-if="!isMobileMode">
-            <NcDivider />
+            <!-- <NcDivider /> -->
 
-            <a
+            <!-- <a
               v-e="['c:nocodb:forum-open']"
               href="https://community.nocodb.com"
               target="_blank"
@@ -165,7 +165,7 @@ onMounted(() => {
               </NcMenuItem>
             </a>
 
-            <NcDivider />
+            <NcDivider /> -->
 
             <nuxt-link v-e="['c:user:settings']" class="!no-underline" to="/account/profile">
               <NcMenuItem> <GeneralIcon icon="ncSettings" class="menu-icon" /> {{ $t('title.accountSettings') }} </NcMenuItem>

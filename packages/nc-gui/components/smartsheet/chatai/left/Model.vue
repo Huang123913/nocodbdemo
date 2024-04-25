@@ -19,6 +19,7 @@ const { getCustomCatalogEntityTree, getCheckedModelData, setModelDataList } = st
 const searchModelText = ref<string>('') //搜索模型文本
 // const selectedKeys = ref<string[]>([]) //选中的模型
 const checkedKeys = ref<string[]>([]) //勾选的模型
+const optionFields = ref<any[]>([])
 
 //搜索模型
 const handleSearchModel = () => {}
@@ -37,7 +38,7 @@ onMounted(() => {
 const handleLoadFiles = (e: any, item: object) => {
   e.stopPropagation()
   axios
-    .post('/webapi/innersysapi/VMcdmDataServiceWebApi/findBizCustomEntity', {
+    .post('http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/findBizCustomEntity', {
       entityIds: item.id,
     })
     .then((res: any) => {
