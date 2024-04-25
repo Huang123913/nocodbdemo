@@ -7,14 +7,9 @@
         data-testid="nc-workspace-menu"
         class="flex items-center nc-workspace-menu overflow-hidden py-1.25 pr-0.25 justify-center w-full ml-2"
       >
-        <a
-          class="transition-all duration-200 transform w-24 min-w-10"
-          href="https://github.com/nocodb/nocodb"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img alt="NocoDB" src="~/assets/img/brand/nocodb.png" />
-        </a>
+        <div>
+          <img src="~/assets/img/logonew.png" />
+        </div>
         <div class="flex flex-grow"></div>
       </div>
     </div>
@@ -24,5 +19,10 @@
 <style scoped lang="scss">
 .nc-workspace-menu-item {
   @apply flex items-center pl-2 py-2 gap-2 text-sm hover:text-black;
+}
+img {
+  height: 35px;
+  width: auto;
+  margin-left: -8px;
 }
 </style>

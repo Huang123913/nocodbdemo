@@ -80,6 +80,8 @@ export enum SmartsheetStoreEvents {
   FIELD_ADD = 'field-add',
   MAPPED_BY_COLUMN_CHANGE = 'mapped-by-column-change',
   CLEAR_NEW_ROW = 'clear-new-row',
+  DELETE_FILE = 'delete-file',
+  DELETE_MODE = 'delete-model',
 }
 
 export enum DataSourcesSubTab {

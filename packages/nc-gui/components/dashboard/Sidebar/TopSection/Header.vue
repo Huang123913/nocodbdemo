@@ -17,6 +17,7 @@ const { commandPalette } = useCommandPalette()
       Quick Actions
       <div
         class="inline-flex gap-1 justify-center text-xs px-[8px] py-[1px] uppercase border-1 border-gray-300 rounded-md bg-slate-150 text-gray-500"
+        style="display: none"
       >
         <kbd class="text-[16px] mt-[0.5px]">⌘</kbd>
         <kbd class="!leading-4">K</kbd>
