@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { useTitle } from '@vueuse/core'
 import { useI18n, useRoute, useSidebar } from '#imports'
+
+import { useTitle } from '@vueuse/core'
 
 const route = useRoute()
 
@@ -12,7 +13,7 @@ const refreshSidebar = ref(false)
 
 const sidebarReady = ref(false)
 
-useTitle(route.meta?.title && te(route.meta.title) ? `${t(route.meta.title)}` : 'NocoDB')
+useTitle(route.meta?.title && te(route.meta.title) ? `${t(route.meta.title)}` : 'SmartData')
 
 watch(hasSidebar, (val) => {
   if (!val) {

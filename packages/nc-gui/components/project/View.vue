@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { useTitle } from '@vueuse/core'
-import NcLayout from '~icons/nc-icons/layout'
 import { isEeUI } from '#imports'
+import NcLayout from '~icons/nc-icons/layout'
+
+import { useTitle } from '@vueuse/core'
 
 const basesStore = useBases()
 
@@ -70,7 +71,7 @@ watch(
   () => {
     if (activeTable.value?.title) return
 
-    useTitle(`${openedProject.value?.title ?? activeWorkspace.value?.title ?? 'NocoDB'}`)
+    useTitle(`${openedProject.value?.title ?? activeWorkspace.value?.title ?? 'SmartData'}`)
   },
   {
     immediate: true,

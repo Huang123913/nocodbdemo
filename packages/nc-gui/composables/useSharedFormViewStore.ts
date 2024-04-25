@@ -1,21 +1,6 @@
-import useVuelidate from '@vuelidate/core'
-import { helpers, minLength, required } from '@vuelidate/validators'
-import dayjs from 'dayjs'
 import type { Ref } from 'vue'
-import type {
-  BoolType,
-  ColumnType,
-  FormColumnType,
-  FormType,
-  LinkToAnotherRecordType,
-  SelectOptionsType,
-  StringOrNullType,
-  TableType,
-} from 'nocodb-sdk'
-import { RelationTypes, UITypes, isLinksOrLTAR, isSystemColumn, isVirtualCol } from 'nocodb-sdk'
-import { isString } from '@vue/shared'
-import { useTitle } from '@vueuse/core'
-import { filterNullOrUndefinedObjectProperties } from '~/helpers/parsers/parserHelpers'
+
+import type { SharedViewMeta } from '#imports'
 import {
   NcErrorType,
   PreFilledMode,
@@ -41,7 +26,24 @@ import {
   validateEmail,
   watch,
 } from '#imports'
-import type { SharedViewMeta } from '#imports'
+import dayjs from 'dayjs'
+import type {
+  BoolType,
+  ColumnType,
+  FormColumnType,
+  FormType,
+  LinkToAnotherRecordType,
+  SelectOptionsType,
+  StringOrNullType,
+  TableType,
+} from 'nocodb-sdk'
+import { RelationTypes, UITypes, isLinksOrLTAR, isSystemColumn, isVirtualCol } from 'nocodb-sdk'
+import { filterNullOrUndefinedObjectProperties } from '~/helpers/parsers/parserHelpers'
+
+import { isString } from '@vue/shared'
+import useVuelidate from '@vuelidate/core'
+import { helpers, minLength, required } from '@vuelidate/validators'
+import { useTitle } from '@vueuse/core'
 
 const [useProvideSharedFormStore, useSharedFormStore] = useInjectionState((sharedViewId: string) => {
   const progress = ref(false)
@@ -552,7 +554,7 @@ const [useProvideSharedFormStore, useSharedFormStore] = useInjectionState((share
   watch(
     () => sharedFormView.value?.heading,
     () => {
-      useTitle(`${sharedFormView.value?.heading ?? 'NocoDB'}`)
+      useTitle(`${sharedFormView.value?.heading ?? 'SmartData'}`)
     },
     {
       flush: 'post',
