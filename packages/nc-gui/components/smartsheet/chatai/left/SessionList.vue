@@ -96,19 +96,19 @@ const handleSend = async () => {
   })
   // 获取sql
   const id = Date.now()
-  // let result = await axios.get('/api/v0/ask', {
-  //   params: {
-  //     question: `${textAreaValue.value}`,
-  //     id,
-  //     orgid: 1,
-  //     projectid: 1,
-  //     modelrange: JSON.stringify(modelrange),
-  //   },
-  //   headers: {
-  //     'ngrok-skip-browser-warning': 'true',
-  //   },
-  //   timeout: 5000,
-  // })
+  let result = await axios.get('/api/v0/ask', {
+    params: {
+      question: `${textAreaValue.value}`,
+      id,
+      orgid: 1,
+      projectid: 1,
+      modelrange: JSON.stringify(modelrange),
+    },
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+    },
+    timeout: 5000,
+  })
   // let result = {
   //   data: {
   //     id,
@@ -117,11 +117,11 @@ const handleSend = async () => {
   //   },
   // }
   //result?.data
-  if (true) {
+  if (result?.data) {
     //执行sql
     // let sql = result?.data.text.replace(/\n/g, ' ')
-    let sql = 'SELECT field70003, field70002 FROM simulate_biz_entity_700'
-    // let sql = result.data.text.replace(/;/g, '')
+    // let sql = 'SELECT field70003, field70002 FROM simulate_biz_entity_700'
+    let sql = result.data.text.replace(/;/g, '')
     let queryBizCustomEntityData = await axios.post('/webapi/innersysapi/VMcdmDataServiceWebApi/queryBizCustomEntityData', {
       sql,
     })

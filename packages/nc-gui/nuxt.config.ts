@@ -1,13 +1,14 @@
 import { dirname, resolve } from 'node:path'
-import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
-import Icons from 'unplugin-icons/vite'
-import IconsResolver from 'unplugin-icons/resolver'
-import Components from 'unplugin-vue-components/vite'
-import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
-import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill'
-import { FileSystemIconLoader } from 'unplugin-icons/loaders'
 
+import { FileSystemIconLoader } from 'unplugin-icons/loaders'
+import IconsResolver from 'unplugin-icons/resolver'
+import Icons from 'unplugin-icons/vite'
+import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers'
+import Components from 'unplugin-vue-components/vite'
 import PurgeIcons from 'vite-plugin-purge-icons'
+
+import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill'
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -200,6 +201,21 @@ export default defineNuxtConfig({
         usePolling: true,
       },
       proxy: {
+        '/api/v0': {
+          target: 'https://c538-14-123-253-17.ngrok-free.app',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path) => {
+            return path
+          },
+        },
+        '/webapi': {
+          target: 'http://databoard-test.yindangu.com',
+          changeOrigin: true,
+          rewrite: (path: any) => {
+            return path
+          },
+        },
         '/api': {
           target: 'http://smartdata-server.yindangu.com',
           changeOrigin: true,
