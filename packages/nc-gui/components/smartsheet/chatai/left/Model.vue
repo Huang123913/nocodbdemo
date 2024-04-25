@@ -144,6 +144,10 @@ eventBus.on((event, id) => {
   }
 }
 
+::v-deep .ant-tree-switcher {
+  top: -2px;
+}
+
 ::v-deep .ant-tree-node-content-wrapper {
   width: 100% !important;
 }

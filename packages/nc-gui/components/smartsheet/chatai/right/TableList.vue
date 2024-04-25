@@ -245,6 +245,9 @@ const handleEdit = (value: boolean) => {
 </template>
 
 <style lang="scss">
+.ant-tree-switcher {
+  top: -2px;
+}
 // .ant-table-tbody {
 //   &::-webkit-scrollbar {
 //     width: 6px;

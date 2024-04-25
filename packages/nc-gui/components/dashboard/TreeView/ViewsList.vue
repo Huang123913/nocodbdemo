@@ -1,9 +1,4 @@
 <script lang="ts" setup>
-import type { ViewType } from 'nocodb-sdk'
-import { ViewTypes } from 'nocodb-sdk'
-import type { SortableEvent } from 'sortablejs'
-import Sortable from 'sortablejs'
-import type { Menu as AntMenu } from 'ant-design-vue'
 import {
   extractSdkResponseErrorMsg,
   isDefaultBase,
@@ -20,6 +15,11 @@ import {
   viewTypeAlias,
   watch,
 } from '#imports'
+import type { Menu as AntMenu } from 'ant-design-vue'
+import type { ViewType } from 'nocodb-sdk'
+import { ViewTypes } from 'nocodb-sdk'
+import type { SortableEvent } from 'sortablejs'
+import Sortable from 'sortablejs'
 
 interface Emits {
   (

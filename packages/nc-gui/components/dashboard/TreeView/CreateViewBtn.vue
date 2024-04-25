@@ -133,7 +133,7 @@ async function onOpenModal({
             <GeneralIcon v-else class="plus" icon="plus" />
           </div>
         </NcMenuItem>
-        <NcMenuItem @click="onOpenModal({ type: ViewTypes.GALLERY })">
+        <!-- <NcMenuItem @click="onOpenModal({ type: ViewTypes.GALLERY })">
           <div class="item" data-testid="sidebar-view-create-gallery">
             <div class="item-inner">
               <GeneralViewIcon :meta="{ type: ViewTypes.GALLERY }" />
@@ -154,8 +154,8 @@ async function onOpenModal({
             <GeneralLoader v-if="toBeCreateType === ViewTypes.KANBAN && isViewListLoading" />
             <GeneralIcon v-else class="plus" icon="plus" />
           </div>
-        </NcMenuItem>
-        <NcMenuItem data-testid="sidebar-view-create-calendar" @click="onOpenModal({ type: ViewTypes.CALENDAR })">
+        </NcMenuItem> -->
+        <!-- <NcMenuItem data-testid="sidebar-view-create-calendar" @click="onOpenModal({ type: ViewTypes.CALENDAR })">
           <div class="item">
             <div class="item-inner">
               <GeneralViewIcon :meta="{ type: ViewTypes.CALENDAR }" />
@@ -165,7 +165,7 @@ async function onOpenModal({
             <GeneralLoader v-if="toBeCreateType === ViewTypes.CALENDAR && isViewListLoading" />
             <GeneralIcon v-else class="plus" icon="plus" />
           </div>
-        </NcMenuItem>
+        </NcMenuItem> -->
       </NcMenu>
     </template>
   </NcDropdown>

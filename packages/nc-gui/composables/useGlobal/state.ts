@@ -1,6 +1,4 @@
-import { useStorage } from '@vueuse/core'
-import type { JwtPayload } from 'jwt-decode'
-import type { AppInfo, State, StoredState } from './types'
+import type { Language, User } from '#imports'
 import {
   BASE_FALLBACK_URL,
   computed,
@@ -12,7 +10,11 @@ import {
   usePreferredLanguages,
   useTimestamp,
 } from '#imports'
-import type { Language, User } from '#imports'
+import type { JwtPayload } from 'jwt-decode'
+
+import { useStorage } from '@vueuse/core'
+
+import type { AppInfo, State, StoredState } from './types'
 
 export function useGlobalState(storageKey = 'nocodb-gui-v2'): State {
   /** get the preferred languages of a user, according to browser settings */
@@ -52,7 +54,7 @@ export function useGlobalState(storageKey = 'nocodb-gui-v2'): State {
     if (availableLocale) locale = availableLocale as keyof typeof Language
 
     return locale
-  }, 'en' /** fallback locale */)
+  }, 'zh-Hans' /** fallback locale */)
 
   /** State */
   const initialState: StoredState = {
