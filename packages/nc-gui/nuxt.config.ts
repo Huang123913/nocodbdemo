@@ -11,6 +11,11 @@ import PurgeIcons from 'vite-plugin-purge-icons'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  devServer: {
+    host: '0.0.0.0',
+    port: 7071,
+  },
+
   modules: ['@vueuse/nuxt', 'nuxt-windicss', '@nuxt/image', '@pinia/nuxt'],
 
   ssr: false,
@@ -193,6 +198,13 @@ export default defineNuxtConfig({
     server: {
       watch: {
         usePolling: true,
+      },
+      proxy: {
+        '/api': {
+          target: 'http://smartdata-server.yindangu.com',
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
     resolve: {
