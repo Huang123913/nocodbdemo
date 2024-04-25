@@ -81,11 +81,33 @@ const handletest = () => {
 }
 
 //发送按钮
+
 const handleSend = async () => {
   if (!textAreaValue.value.trim()) return
   isShowLoading.value = true
   let modelrange = []
-  modelrange = chataiData.value.checkedModelData.map((item) => {
+  let selectedModelData = chataiData.value.checkedModelData
+  if (selectedModelData.length) {
+    console.log('进来')
+    for (let i = 0; i < selectedModelData.length; i++) {
+      let modelItem = selectedModelData[i]
+      if (modelItem.fields.length == 0) {
+        let result = await axios.post(
+          'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/findBizCustomEntity',
+          {
+            entityIds: modelItem.id,
+          },
+        )
+        console.log('result', result)
+        if (result?.data?.data?.datas) {
+          let fields = result?.data?.data?.datas[0].fields
+          modelItem.fields = fields
+        }
+      }
+    }
+  }
+
+  modelrange = selectedModelData.map((item) => {
     let props = []
     if (item?.fields && item?.fields.length) {
       props = item?.fields.map((item1) => {
@@ -94,6 +116,7 @@ const handleSend = async () => {
     }
     return { model_name: item.name, props }
   })
+  console.log('selectedModelData', selectedModelData)
   // 获取sql
   const id = Date.now()
   let result = await axios.get('https://c538-14-123-253-17.ngrok-free.app/api/v0/ask', {
@@ -117,6 +140,7 @@ const handleSend = async () => {
       },
     )
     let resultData = queryBizCustomEntityData?.data?.data
+
     if (resultData) {
       let newSessionItem = {
         id,
@@ -124,13 +148,19 @@ const handleSend = async () => {
         sql,
         searchTime: getNowDate(),
         selectedModel: chataiData.value.checkedModelData.length ? JSON.stringify(chataiData.value.checkedModelData) : '',
-        tabledata: JSON.stringify({ fields: resultData.fields, datas: resultData.datas }),
+        tabledata: JSON.stringify({
+          fields: resultData?.fields ? resultData?.fields : [],
+          datas: resultData?.datas ? resultData?.datas : [],
+        }),
         tip: textAreaValue.value,
       }
       sessionList.value.unshift(newSessionItem)
       textAreaValue.value = ''
       setSessionItem(newSessionItem)
       selectedSessionItem.value = {}
+      if (!queryBizCustomEntityData?.data?.success) {
+        message.warning('抱歉，我不能理解你的问题，请调整后再重试')
+      }
     }
     isShowLoading.value = false
   }

@@ -50,7 +50,7 @@ hooks.hook('page:finish', () => {
               {{ currentVersion }}
             </template>
             <div class="flex items-center gap-2">
-              <img v-if="!isDashboard" width="120" alt="NocoDB" src="~/assets/img/brand/nocodb-full.png" />
+              <img v-if="!isDashboard" class="img-logo-nocodb" alt="NocoDB" src="~/assets/img/logo1.png" />
               <img v-else width="25" alt="NocoDB" src="~/assets/img/icons/256x256.png" />
             </div>
           </a-tooltip>
@@ -66,7 +66,7 @@ hooks.hook('page:finish', () => {
 
         <div class="flex-1" />
 
-        <LazyGeneralReleaseInfo />
+        <!-- <LazyGeneralReleaseInfo /> -->
 
         <a-tooltip v-if="!appInfo.ee" placement="bottom" :mouse-enter-delay="1">
           <template #title>{{ $t('title.switchLanguage') }}</template>
@@ -140,6 +140,10 @@ hooks.hook('page:finish', () => {
 </template>
 
 <style lang="scss">
+.img-logo-nocodb {
+  height: 40px;
+  width: 'auto';
+}
 .nc-lang-btn {
   @apply color-transition flex items-center justify-center fixed bottom-10 right-10 z-99 w-12 h-12 rounded-full shadow-md shadow-gray-500 p-2 !bg-primary text-white ring-opacity-100 active:(ring ring-accent) hover:(ring ring-accent);
 
