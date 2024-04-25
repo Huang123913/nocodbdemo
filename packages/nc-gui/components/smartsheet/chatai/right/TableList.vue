@@ -68,27 +68,33 @@ const handleSaveBtn = async () => {
   console.log('chataiData.value.catalog', chataiData.value.catalog)
   showModal.value = true
 }
+const isShowLoading = ref<boolean>(false)
+
 const handleOk = async (e: MouseEvent) => {
   if (!selectedKeys.value.length) {
     message.warning('请选择模型目录')
     return
   }
+  showModal.value = false
+  isShowLoading.value = true
   let selectedCatalog = filterCatalog(chataiData.value.catalog, selectedKeys.value[0])
-  console.log('选择的目录', selectedCatalog)
   console.log('test', chataiData.value.sessionItem)
-  let model = JSON.parse(chataiData.value.sessionItem?.selectedModel)
-  // let tableData = JSON.parse(chataiData.value.sessionItem?.tabledata)
-  // console.log('tableData', tableData)
-  // console.log('model', model)
+  let model = chataiData.value.sessionItem?.selectedModel ? JSON.parse(chataiData.value.sessionItem?.selectedModel) : []
+  let tableData = chataiData.value.sessionItem?.tabledata.length ? JSON.parse(chataiData.value.sessionItem?.tabledata) : []
+  console.log('tableData', tableData.fields)
+  console.log('tableData', tableData.datas)
   let jsonValue = {
     sql: chataiData.value.sessionItem.sql,
+  }
+  let jsonValue1 = {
+    question: chataiData.value.sessionItem.tip,
   }
   let fields: any[] = []
   model.map((item) => {
     fields.push(...item.fields)
   })
-  fields = fields.map((item) => {
-    return { ...item, id: `${Date.now()}` }
+  fields = fields.map((item, index) => {
+    return { ...item, id: `${Date.now()}${index}` }
   })
   let name = `query_entity_${Date.now()}`
   let entities = [
@@ -96,13 +102,18 @@ const handleOk = async (e: MouseEvent) => {
       id: `${Date.now()}`,
       name,
       code: name,
-      name_cn: '测试模型1',
-      belongCatalog: 'root',
+      name_cn: chataiData.value.sessionItem.textAreaValue,
+      belongCatalog: selectedCatalog[0].code,
       props: [
         {
           name: 'belongSQL',
           code: 'belongSQL',
           jsonValue: JSON.stringify(jsonValue),
+        },
+        {
+          name: 'belongQuestion',
+          code: 'belongQuestion',
+          jsonValue: JSON.stringify(jsonValue1),
         },
       ],
       fields,
@@ -120,15 +131,28 @@ const handleOk = async (e: MouseEvent) => {
     let generateMDTableResutl = await axios.post('/webapi/innersysapi/VMcdmDataServiceWebApi/generateMDTable', {
       entityIds,
     })
+    console.log('generateMDTableResutl::', generateMDTableResutl)
+    let tableInfo = generateMDTableResutl?.data?.data?.tableInfo[0]
+    if (tableInfo) {
+      let datas = tableData.datas.map((item, index) => {
+        return { ...item, id: `${Date.now()}${index}` }
+      })
+      let batchInsertOrUpdate = await axios.post(
+        `/restapi/bizentity/data/${tableInfo.componentCode}/${tableInfo.tableName}/batchInsertOrUpdate`,
+        {
+          datas: datas,
+        },
+      )
+    }
     // 生成ddl
     let generateDDL = await axios.post('/webapi/innersysapi/VMcdmDataServiceWebApi/generateDDL', {
-      entityIds: 'ff8081818ef5e425018ef5e5fd8f1b95',
+      entityIds: entityIds,
       detail: false,
     })
     let ddl = generateDDL?.data?.data?.ddl
     if (ddl) {
       let ddlString = ddl?.join('\\')
-      await axios.post('/api/v0/train', {
+      await axios.post('https://c538-14-123-253-17.ngrok-free.app/api/v0/train', {
         question: chataiData.value.sessionItem?.textAreaValue,
         id: chataiData.value.sessionItem.id,
         orgid: 1,
@@ -140,7 +164,8 @@ const handleOk = async (e: MouseEvent) => {
     }
     await getCustomCatalogEntityTree()
   }
-  showModal.value = false
+  isShowLoading.value = false
+  message.success('发布成功')
 }
 
 const handleEdit = (value: boolean) => {
@@ -180,7 +205,7 @@ const handleEdit = (value: boolean) => {
           {{ chataiData.sessionItem?.sql }}
         </a-typography-text>
       </div>
-      <!-- <a-button class="save-btn" type="primary" size="middle" @click="handleSaveBtn()"> 发布 </a-button> -->
+      <a-button class="save-btn" type="primary" size="middle" @click="handleSaveBtn()"> 发布 </a-button>
     </div>
     <!-- 表格数据 -->
     <div class="table-data">
@@ -198,6 +223,8 @@ const handleEdit = (value: boolean) => {
         </template>
       </a-tree>
     </a-modal>
+
+    <SmartsheetChataiCommonLoading :isShow="isShowLoading" />
   </div>
 </template>
 

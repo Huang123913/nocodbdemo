@@ -96,7 +96,7 @@ const handleSend = async () => {
   })
   // 获取sql
   const id = Date.now()
-  let result = await axios.get('/api/v0/ask', {
+  let result = await axios.get('https://c538-14-123-253-17.ngrok-free.app/api/v0/ask', {
     params: {
       question: `${textAreaValue.value}`,
       id,
@@ -107,20 +107,8 @@ const handleSend = async () => {
     headers: {
       'ngrok-skip-browser-warning': 'true',
     },
-    timeout: 5000,
   })
-  // let result = {
-  //   data: {
-  //     id,
-  //     text: 'SELECT SUM(sales_amount) FROM sales',
-  //     type: 'sql',
-  //   },
-  // }
-  //result?.data
   if (result?.data) {
-    //执行sql
-    // let sql = result?.data.text.replace(/\n/g, ' ')
-    // let sql = 'SELECT field70003, field70002 FROM simulate_biz_entity_700'
     let sql = result.data.text.replace(/;/g, '')
     let queryBizCustomEntityData = await axios.post('/webapi/innersysapi/VMcdmDataServiceWebApi/queryBizCustomEntityData', {
       sql,
@@ -134,6 +122,7 @@ const handleSend = async () => {
         searchTime: getNowDate(),
         selectedModel: chataiData.value.checkedModelData.length ? JSON.stringify(chataiData.value.checkedModelData) : '',
         tabledata: JSON.stringify({ fields: resultData.fields, datas: resultData.datas }),
+        tip: textAreaValue.value,
       }
       sessionList.value.unshift(newSessionItem)
       textAreaValue.value = ''
@@ -142,23 +131,6 @@ const handleSend = async () => {
     }
     isShowLoading.value = false
   }
-
-  // setTimeout(() => {
-  //   let newSessionItem = {
-  //     id: Date.now(),
-  //     textAreaValue: textAreaValue.value,
-  //     sql: "SELECT * FROM sales_data WHERE date >= '2022-01-01' AND date <= '2023-12-31' AND department = '大客户部'",
-  //     searchTime: getNowDate(),
-  //     selectedModel: chataiData.value.checkedModelData.length ? JSON.stringify(chataiData.value.checkedModelData) : '',
-  //     tabledata: JSON.stringify(chataiData.value.tableData[sessionList.value.length % 2 === 0 ? 0 : 1]),
-  //   }
-  //   sessionList.value.unshift(newSessionItem)
-  //   textAreaValue.value = ''
-  //   setSessionItem(newSessionItem)
-  //   selectedSessionItem.value = {}
-  //   isShowLoading.value = false
-  //   console.log('sessionList::', sessionList.value)
-  // }, 600)
 }
 </script>
 

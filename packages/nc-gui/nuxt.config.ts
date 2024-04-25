@@ -201,7 +201,7 @@ export default defineNuxtConfig({
         usePolling: true,
       },
       proxy: {
-        '/api/v0': {
+        '/api/v0/test': {
           target: 'https://c538-14-123-253-17.ngrok-free.app',
           changeOrigin: true,
           secure: true,
@@ -210,6 +210,13 @@ export default defineNuxtConfig({
           },
         },
         '/webapi': {
+          target: 'http://databoard-test.yindangu.com',
+          changeOrigin: true,
+          rewrite: (path: any) => {
+            return path
+          },
+        },
+        '/restapi': {
           target: 'http://databoard-test.yindangu.com',
           changeOrigin: true,
           rewrite: (path: any) => {
