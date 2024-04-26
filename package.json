@@ -33,6 +33,9 @@
   },
   "scripts": {
     "bootstrap": "pnpm --filter=nocodb-sdk install && pnpm --filter=nocodb-sdk run build && pnpm --filter=nocodb --filter=nc-gui --filter=playwright install",
+    "run": "pnpm run build; pnpm run start",
+    "start": "export PORT=7070; pnpm --filter=nocodb run start:prod",
+    "build": "pnpm --filter=nc-gui run build:copy; pnpm --filter=nocodb run build",
     "start:frontend": "pnpm --filter=nc-gui run dev",
     "start:backend": "pnpm --filter=nocodb run start",
     "lint:staged:playwright": "cd ./tests/playwright; pnpm dlx lint-staged; cd -",
