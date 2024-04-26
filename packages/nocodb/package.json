@@ -25,7 +25,7 @@
     "obfuscate:build:publish": "pnpm run build:obfuscate && pnpm publish .",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "pnpm run watch:run",
-    "start:prod": "export PORT=7070; node docker/main",
+    "start:prod": "export NC_PUBLIC_URL=http://smartdata-server.yindangu.com PORT=7070; node docker/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
