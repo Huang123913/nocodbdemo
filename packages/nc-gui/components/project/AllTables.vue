@@ -86,38 +86,9 @@ const onCreateBaseClick = () => {
 }
 
 const openChatAi = async () => {
-  // let sourceId = openedProject.value!.sources?.[0].id
   let baseId = openedProject?.value.id ? openedProject?.value.id : ''
-  // const tableMeta = await $api.source.tableCreate(baseId, sourceId!, {
-  //   table_name: 'test6',
-  //   title: 'test6',
-  //   columns: [],
-  //   is_hybrid: true,
-  // })
-  // // let tableMeta = {
-  // //   id: 'chart' + Date.now(),
-  // //   title: '会话',
-  // //   base_id: baseId,
-  // //   source_id: sourceId,
-  // // }
-  // await addTab({
-  //   id: tableMeta.id as string,
-  //   title: tableMeta.title,
-  //   type: TabType.TABLE,
-  //   baseId: baseId,
-  // })
-
-  // addTable(baseId, tableMeta)
-  // await loadProjectTables(baseId, true)
-  // emit('create', tableMeta)
-  // refreshCommandPalette()
-  // await openTable(tableMeta)
-  // console.log('baseId::', baseId)
   navigateTo({
     path: `/nc/${baseId}/chatai`,
-    query: {
-      viewId: 'chatai',
-    },
   })
 }
 </script>

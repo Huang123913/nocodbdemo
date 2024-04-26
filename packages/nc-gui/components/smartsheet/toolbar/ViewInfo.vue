@@ -130,6 +130,21 @@ const routeId = computed(() => {
         </NcTooltip>
       </div>
     </template>
+    <span
+      v-if="route.params.viewId === 'chatai'"
+      class="text-ellipsis overflow-hidden text-gray-500 xs:ml-2"
+      :class="{
+        'text-gray-500': !isMobileMode,
+        'text-gray-800 font-medium': isMobileMode || activeView?.is_default,
+      }"
+      :style="{
+        wordBreak: 'keep-all',
+        whiteSpace: 'nowrap',
+        display: 'inline',
+      }"
+    >
+      {{ route.params.viewId }}
+    </span>
 
     <div v-if="!isMobileMode && routeId" class="pl-1.25 text-gray-500">/</div>
 
