@@ -204,7 +204,6 @@ const routeId = computed(() => {
 
       <template v-else>
         <LazySmartsheetChatAi />
-        <!-- <iframe src="http://192.168.0.110:5173/" width="100%" height="100%" frameborder="0"></iframe> -->
       </template>
     </div>
     <LazySmartsheetExpandedFormDetached />
