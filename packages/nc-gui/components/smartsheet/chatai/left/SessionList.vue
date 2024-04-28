@@ -1,39 +1,66 @@
 <script lang="ts" setup>
-import { getNowDate } from '#imports'
+import { callRepairWithRetry, deepClone, getNowDate } from '#imports'
 import axios from 'axios'
+import { v4 as uuidv4 } from 'uuid'
 
 import { CloseOutlined, DeleteFilled, SearchOutlined, SendOutlined } from '@ant-design/icons-vue'
 
+import chataiApi from '../../../../api/chatai'
 import { useChataiStore } from '../../../../store/chatai'
+import type { SessionItem } from '../interfac'
 
-const store1 = useChataiStore()
-const { chataiData } = storeToRefs(store1)
-const { setSessionItem } = store1
+const store = useChataiStore()
+const { chataiData } = storeToRefs(store)
+const { setSessionItem, getCustomCatalogEntityTree } = store
 
 const searchSessionText = ref<string>('') //搜索会话文本
-const searchSessionResult = ref<any[]>([]) //搜索会话的结果
-const sessionList = ref<any[]>([]) //会话列表
 const isShowSearchSessionResult = ref<boolean>(false) //是否显示搜索的会话结果
-const selectedSessionItem = ref<object>({}) //被选中的会话
+const searchSessionResult = ref<SessionItem[]>([]) //搜索会话的结果
+const sessionList = ref<SessionItem[]>([]) //会话列表
+const selectedSessionItem = ref<SessionItem>({
+  id: '',
+  textAreaValue: '',
+  sql: '',
+  selectedModel: '',
+  tabledata: '',
+  tip: '',
+}) //被选中的会话
 const isOpenModel = ref<boolean>(false) //是否打开模型数据模块
 const isShowLoading = ref<boolean>(false) //加载效果
 const textAreaValue = ref<string>('') //查询内容
+const locale = {
+  emptyText: '暂无数据',
+}
 
-onMounted(() => {
-  setSessionItem({})
+onMounted(async () => {
+  // 清空展示的会话信息
+  setSessionItem({
+    id: '',
+    textAreaValue: '',
+    sql: '',
+    selectedModel: '',
+    tabledata: '',
+    tip: '',
+  })
+  isShowLoading.value = true
+  // 获取模型数据
+  await getCustomCatalogEntityTree().catch((err: any) => {
+    isShowLoading.value = false
+  })
+  isShowLoading.value = false
 })
 
 //删除所有会话
 const handldeleteAllSession = () => {
-  setSessionItem({})
+  setSessionItem({
+    id: '',
+    textAreaValue: '',
+    sql: '',
+    selectedModel: '',
+    tabledata: '',
+    tip: '',
+  })
   sessionList.value = []
-}
-
-// 清空搜索内容
-const handleClickCleanBtn = () => {
-  searchSessionText.value = ''
-  isShowSearchSessionResult.value = false
-  setSessionItem(selectedSessionItem?.id ? selectedSessionItem : sessionList[0])
 }
 
 // 搜索会话
@@ -42,23 +69,29 @@ const handleSearchSession = () => {
     handleClickCleanBtn()
   } else {
     isShowSearchSessionResult.value = true
-    searchSessionResult.value = sessionList.value.filter((item) => {
+    searchSessionResult.value = sessionList.value.filter((item: SessionItem) => {
       return item.textAreaValue.indexOf(searchSessionText.value) > -1
     })
   }
 }
 
+// 清空搜索内容
+const handleClickCleanBtn = () => {
+  searchSessionText.value = ''
+  isShowSearchSessionResult.value = false
+  setSessionItem(selectedSessionItem.value.id ? selectedSessionItem.value : sessionList.value[0])
+}
+
 //选中会话
-const handleClickSessionItem = (sessionItem: any) => {
+const handleClickSessionItem = (sessionItem: SessionItem) => {
   selectedSessionItem.value = sessionItem
   setSessionItem(sessionItem)
 }
 
 //删除会话
-const handleDeleteSessionItem = (deleteItem: any) => {
+const handleDeleteSessionItem = (deleteItem: SessionItem) => {
   sessionList.value = sessionList.value.filter((item) => item.id !== deleteItem.id)
-  let findSessionItem = sessionList.value.find((item) => item.textAreaValue === chataiData.value.sessionItem?.textAreaValue)
-  !findSessionItem && setSessionItem(sessionList.value[0])
+  deleteItem.id === chataiData.value.sessionItem.id && setSessionItem(sessionList.value[0])
 }
 
 //设置是否打开模型
@@ -66,100 +99,83 @@ const setIsOpenModel = (value: boolean) => {
   isOpenModel.value = value
 }
 
-const handletest = () => {
+//获取查询范围
+const getModelrange = async () => {
   let modelrange = []
-  modelrange = chataiData.value.checkedModelData.map((item) => {
-    let props = []
-    if (item?.fields && item?.fields.length) {
-      props = item?.fields.map((item1) => {
-        return { prop_name: item1.fieldName }
-      })
-    }
-    return { model_name: item.name, props }
-  })
-  console.log(JSON.stringify(modelrange))
-}
-
-//发送按钮
-
-const handleSend = async () => {
-  if (!textAreaValue.value.trim()) return
-  isShowLoading.value = true
-  let modelrange = []
-  let selectedModelData = chataiData.value.checkedModelData
-  if (selectedModelData.length) {
-    console.log('进来')
-    for (let i = 0; i < selectedModelData.length; i++) {
-      let modelItem = selectedModelData[i]
-      if (modelItem.fields.length == 0) {
-        let result = await axios.post(
-          'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/findBizCustomEntity',
-          {
-            entityIds: modelItem.id,
-          },
-        )
-        console.log('result', result)
-        if (result?.data?.data?.datas) {
-          let fields = result?.data?.data?.datas[0].fields
+  let deepCloneData = deepClone(chataiData.value.checkedModelData)
+  if (deepCloneData.length) {
+    for (let i = 0; i < deepCloneData.length; i++) {
+      let modelItem = deepCloneData[i]
+      if (modelItem?.fields && modelItem.fields.length == 0) {
+        let questionRes: any = await chataiApi.findBizCustomEntity(modelItem.id).catch((err) => (isShowLoading.value = false))
+        if (questionRes?.success) {
+          let fields = questionRes?.data?.datas[0]?.fields
           modelItem.fields = fields
         }
       }
     }
   }
-
-  modelrange = selectedModelData.map((item) => {
+  modelrange = deepCloneData.map((item) => {
     let props = []
-    if (item?.fields && item?.fields.length) {
-      props = item?.fields.map((item1) => {
+    if (item.fields.length) {
+      props = item.fields.map((item1) => {
         return { prop_name: item1.fieldName }
       })
     }
     return { model_name: item.name, props }
   })
-  console.log('selectedModelData', selectedModelData)
-  // 获取sql
-  const id = Date.now()
-  let result = await axios.get('https://c538-14-123-253-17.ngrok-free.app/api/v0/ask', {
-    params: {
-      question: `${textAreaValue.value}`,
-      id,
-      orgid: 1,
-      projectid: 1,
-      modelrange: JSON.stringify(modelrange),
-    },
-    headers: {
-      'ngrok-skip-browser-warning': 'true',
-    },
-  })
-  if (result?.data) {
-    let sql = result.data.text.replace(/;/g, '')
-    let queryBizCustomEntityData = await axios.post(
-      'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/queryBizCustomEntityData',
-      {
-        sql,
-      },
-    )
-    let resultData = queryBizCustomEntityData?.data?.data
+  return modelrange
+}
 
-    if (resultData) {
+//发送按钮
+const handleSend = async () => {
+  if (!textAreaValue.value.trim()) return
+  isShowLoading.value = true
+  const id = uuidv4()
+  let modelrange = await getModelrange()
+  let getSqlRes = await chataiApi
+    .getSqlApi(`${textAreaValue.value}`, id, modelrange)
+    .catch((err) => (isShowLoading.value = false))
+  if (getSqlRes) {
+    let sql = getSqlRes.text
+    let sqlId = getSqlRes.id
+    if (sql.indexOf('SELECT') === -1) {
+      message.warning(getSqlRes.text)
+      isShowLoading.value = false
+      return
+    }
+    sql = sql.replace(/;/g, '')
+    let queryBizCustomEntityData = await chataiApi.exeSql({ sql }).catch((err) => (isShowLoading.value = false))
+    if (!queryBizCustomEntityData?.success || !queryBizCustomEntityData?.data.success) {
+      let err_msg = queryBizCustomEntityData?.success ? queryBizCustomEntityData?.data.errorMessage : queryBizCustomEntityData.msg
+      let newExeRes = await callRepairWithRetry(sqlId, err_msg, textAreaValue.value)
+      if (!newExeRes?.success || !newExeRes?.data.success) {
+        message.warning('抱歉，我不能理解你的问题，请调整后再重试')
+      }
+      queryBizCustomEntityData = newExeRes
+    }
+    if (queryBizCustomEntityData?.data) {
+      let fields = queryBizCustomEntityData?.data?.fields
+      let datas = queryBizCustomEntityData?.data?.datas
       let newSessionItem = {
         id,
         textAreaValue: textAreaValue.value,
-        sql,
+        sql: queryBizCustomEntityData?.sql ? queryBizCustomEntityData?.sql : sql,
         searchTime: getNowDate(),
         selectedModel: chataiData.value.checkedModelData.length ? JSON.stringify(chataiData.value.checkedModelData) : '',
-        tabledata: JSON.stringify({
-          fields: resultData?.fields ? resultData?.fields : [],
-          datas: resultData?.datas ? resultData?.datas : [],
-        }),
+        tabledata: JSON.stringify({ fields, datas }),
         tip: textAreaValue.value,
       }
       sessionList.value.unshift(newSessionItem)
       textAreaValue.value = ''
       setSessionItem(newSessionItem)
-      selectedSessionItem.value = {}
-      if (!queryBizCustomEntityData?.data?.success) {
-        message.warning('抱歉，我不能理解你的问题，请调整后再重试')
+      selectedSessionItem.value = {
+        id: '',
+        textAreaValue: '',
+        sql: '',
+        selectedModel: '',
+        tabledata: '',
+        tip: '',
       }
     }
     isShowLoading.value = false
@@ -175,23 +191,21 @@ const handleSend = async () => {
         <a-badge
           :count="sessionList.length"
           :number-style="{
-            backgroundColor: 'rgb(227, 239, 251)',
+            backgroundColor: 'rgb(235, 240, 255)',
             color: 'rgb(18, 70, 123)',
             fontSize: 14,
-            fontWeight: 500,
+            fontWeight: 700,
             boxShadow: '0 0 0 0 transparent',
           }"
-          :offset="[8, -2]"
+          :offset="[10, 2]"
         >
           <a-typography-title :level="4">会话</a-typography-title>
         </a-badge>
-        <a-button class="delete-btn" @click="handldeleteAllSession()" type="text">
-          <template #icon><delete-filled /></template>
-        </a-button>
+        <delete-filled class="delete-icon" @click="handldeleteAllSession()" />
       </div>
       <!-- 搜索会话 -->
       <div class="search-session">
-        <a-input placeholder="搜索会话" v-model:value="searchSessionText">
+        <a-input placeholder="搜索会话" v-model:value="searchSessionText" @keyup.enter="handleSearchSession()">
           <template #suffix>
             <CloseOutlined @click="handleClickCleanBtn()" v-show="searchSessionText.trim()" style="margin-right: 5px" />
             <search-outlined @click="handleSearchSession()" />
@@ -200,6 +214,7 @@ const handleSend = async () => {
       </div>
       <!-- 会话列表 -->
       <a-list
+        :locale="locale"
         class="session-list"
         item-layout="horizontal"
         :data-source="isShowSearchSessionResult ? searchSessionResult : sessionList"
@@ -221,18 +236,15 @@ const handleSend = async () => {
                 </div>
                 <div class="list-item-left-time">{{ item.searchTime }}</div>
               </div>
-              <a-button
-                class="delete-btn delete-session-item-btn"
+              <delete-filled
+                class="delete-icon delete-session-item-btn"
                 @click="
                   (e) => {
                     e.stopPropagation()
                     handleDeleteSessionItem(item)
                   }
                 "
-                type="text"
-              >
-                <template #icon><delete-filled /></template>
-              </a-button>
+              />
             </div>
           </a-list-item>
         </template>
@@ -254,7 +266,6 @@ const handleSend = async () => {
             发送
             <send-outlined />
           </a-button>
-          <!-- <a-button type="primary" size="middle" class="select-btn send-btn" @click="handletest()"> test </a-button> -->
         </div>
       </a-card>
     </div>
@@ -295,7 +306,6 @@ const handleSend = async () => {
     display: flex;
     justify-content: space-between;
     padding: 16px 8px;
-    // background-color: red;
   }
   .btn-right {
     display: flex;
@@ -322,18 +332,6 @@ const handleSend = async () => {
   }
 }
 
-.delete-btn {
-  position: relative;
-  right: -9px;
-  color: rgb(99, 107, 116);
-  background-color: transparent;
-  border: none;
-  box-shadow: none;
-  &:active {
-    background-color: transparent;
-    box-shadow: none;
-  }
-}
 .background {
   background-color: rgb(221, 231, 238);
   font-weight: 500 !important;
@@ -345,7 +343,6 @@ const handleSend = async () => {
   height: 100%;
   overflow: hidden;
   box-sizing: border-box;
-
   .session-list-content-left {
     flex: 1;
     width: 100%;
@@ -356,13 +353,15 @@ const handleSend = async () => {
     background-color: rgb(240, 244, 248);
     display: flex;
     flex-direction: column;
+    .delete-icon {
+      color: rgb(99, 107, 116);
+    }
     .top-title {
       width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
       box-sizing: border-box;
-
       .ant-typography {
         font-size: 18px;
         margin: 0;
@@ -453,9 +452,8 @@ const handleSend = async () => {
       }
       .delete-session-item-btn {
         position: absolute;
-        right: -25px;
+        right: -16px;
         opacity: 0;
-        transition: none;
       }
     }
   }

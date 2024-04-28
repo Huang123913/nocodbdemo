@@ -143,7 +143,7 @@ const routeId = computed(() => {
         display: 'inline',
       }"
     >
-      {{ route.params.viewId }}
+      {{ $t('labels.chatai') }}
     </span>
 
     <div v-if="!isMobileMode && routeId" class="pl-1.25 text-gray-500">/</div>

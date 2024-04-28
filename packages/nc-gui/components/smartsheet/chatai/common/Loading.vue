@@ -12,10 +12,15 @@ const props = defineProps<{
 
 <style scoped lang="scss">
 .loading-content {
+  width: 100vw;
+  height: 100vh;
   position: fixed;
-  z-index: 888;
-  top: 50%;
-  left: 50%;
+  top: 0;
+  left: 0;
+  z-index: 9999999;
+  .ant-spin {
+    margin: auto !important;
+  }
   ::v-deep .ant-spin-dot-item {
     background-color: rgb(25, 118, 210);
   }

@@ -19,7 +19,8 @@ const isShow = computed(() => {
 })
 
 const columns = computed(() => {
-  let result = chataiData.value.sessionItem?.tabledata ? JSON.parse(chataiData.value.sessionItem.tabledata).fields : []
+  if (!chataiData.value.sessionItem?.sql) return []
+  let result = JSON.parse(chataiData.value.sessionItem.tabledata).fields
   let fileds = result?.filter((item) => item.name !== 'id')
   let newFileds = fileds?.map((item) => {
     return { ...item, title: item.name, dataIndex: item.name }
@@ -28,7 +29,8 @@ const columns = computed(() => {
 })
 
 const tableData = computed(() => {
-  let result = chataiData.value.sessionItem?.tabledata ? JSON.parse(chataiData.value.sessionItem.tabledata).datas : []
+  if (!chataiData.value.sessionItem?.sql) return []
+  let result = JSON.parse(chataiData.value.sessionItem.tabledata).datas
   let newDatas = result?.map((item) => {
     let newItem = { ...item }
     delete newItem?.id
@@ -63,9 +65,8 @@ const handleSaveBtn = async () => {
       }
     })
   }
-  findParanent(chataiData.value.catalog)
-  console.log('expandedKeys', expandedKeys)
-  console.log('chataiData.value.catalog', chataiData.value.catalog)
+  findParanent(chataiData.value.modelCatalogTree)
+  console.log('chataiData.value.catalog', chataiData.value.modelCatalogTree)
   showModal.value = true
 }
 const isShowLoading = ref<boolean>(false)
@@ -77,7 +78,7 @@ const handleOk = async (e: MouseEvent) => {
   }
   showModal.value = false
   isShowLoading.value = true
-  let selectedCatalog = filterCatalog(chataiData.value.catalog, selectedKeys.value[0])
+  let selectedCatalog = filterCatalog(chataiData.value.modelCatalogTree, selectedKeys.value[0])
   console.log('test', chataiData.value.sessionItem)
   let model = chataiData.value.sessionItem?.selectedModel ? JSON.parse(chataiData.value.sessionItem?.selectedModel) : []
   let tableData = chataiData.value.sessionItem?.tabledata.length ? JSON.parse(chataiData.value.sessionItem?.tabledata) : []
@@ -169,14 +170,6 @@ const handleOk = async (e: MouseEvent) => {
       await axios.post(
         `https://c538-14-123-253-17.ngrok-free.app/api/v0/train?&id=${chataiData.value.sessionItem.id}&orgid=1&projectid=1&question=${chataiData.value.sessionItem?.tip}&sql=${chataiData.value.sessionItem?.sql}`,
       )
-      // await axios.post('https://c538-14-123-253-17.ngrok-free.app/api/v0/train', {
-      //   question: chataiData.value.sessionItem?.textAreaValue,
-      //   id: chataiData.value.sessionItem.id,
-      //   orgid: 1,
-      //   projectid: 1,
-      //   sql: chataiData.value.sessionItem?.sql,
-      //   ddl: ddlString,
-      // })
     }
     await getCustomCatalogEntityTree()
   }
@@ -227,10 +220,18 @@ const handleEdit = (value: boolean) => {
     <div class="table-data">
       <a-table :pagination="false" class="ant-table-striped" :columns="columns" :data-source="tableData" :scroll="{ y: 500 }" />
     </div>
-    <a-modal v-model:visible="showModal" title="选择模型目录" @ok="handleOk" cancelText="取消" okText="确认">
+    <a-modal
+      class="catalog-modal"
+      v-model:visible="showModal"
+      title="选择模型目录"
+      @ok="handleOk"
+      cancelText="取消"
+      okText="确认"
+    >
       <a-tree
+        blockNode
         class="catalog"
-        :tree-data="chataiData.catalog"
+        :tree-data="chataiData.modelCatalogTree"
         v-model:selectedKeys="selectedKeys"
         v-model:expandedKeys="expandedKeys"
       >
@@ -248,39 +249,23 @@ const handleEdit = (value: boolean) => {
 .ant-tree-switcher {
   top: -2px;
 }
-// .ant-table-tbody {
-//   &::-webkit-scrollbar {
-//     width: 6px;
-//     height: 5px;
-//   }
-//   &::-webkit-scrollbar-thumb {
-//     background-color: #c1c1c1;
-//     border-radius: 10px;
-//   }
-//   &::-webkit-scrollbar-thumb:hover {
-//     background-color: rgb(168, 168, 168);
-//     border-radius: 10px;
-//   }
-//   &::-webkit-scrollbar-track {
-//     background-color: #e0e0e0;
-//     border-radius: 10px;
-//   }
-// }
-.ant-modal-content {
-  padding: 16px 16px 0 16px !important;
-  .ant-modal-header {
-    padding: 16px 0 !important;
+.catalog-modal {
+  .ant-modal-content {
+    padding: 16px 16px 0 16px !important;
+    .ant-modal-header {
+      padding: 16px 0 !important;
+    }
+    .ant-modal-body {
+      padding: 8px !important;
+    }
+    .ant-modal-footer {
+      padding: 16px;
+    }
   }
-  .ant-modal-body {
-    padding: 8px !important;
+  .ant-modal-close {
+    top: 32px !important;
+    right: 15px;
   }
-  .ant-modal-footer {
-    padding: 16px;
-  }
-}
-.ant-modal-close {
-  top: 10px !important;
-  right: 15px;
 }
 
 .catalog {

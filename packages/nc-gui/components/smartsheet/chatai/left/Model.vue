@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import { ref, useSmartsheetStoreOrThrow } from '#imports'
-import axios from 'axios'
 
-// import type { TreeProps } from 'ant-design-vue'
-import { CloseOutlined, EllipsisOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons-vue'
+import { CloseOutlined, SearchOutlined } from '@ant-design/icons-vue'
 
+import catalog from '../../../../assets/img/catalog.svg'
 import model from '../../../../assets/img/model.svg'
+import reverseSelectionGrey from '../../../../assets/img/reverse-selection-grey.svg'
+import reverseSelection from '../../../../assets/img/reverse-selection.svg'
 import { useChataiStore } from '../../../../store/chatai'
+
+const { eventBus } = useSmartsheetStoreOrThrow()
 
 const props = defineProps<{
   isOpenModel: boolean
@@ -15,76 +18,126 @@ const props = defineProps<{
 
 const store = useChataiStore()
 const { chataiData } = storeToRefs(store)
-const { getCustomCatalogEntityTree, getCheckedModelData, setModelDataList } = store
+const { getCheckedModelData } = store
 const searchModelText = ref<string>('') //搜索模型文本
-// const selectedKeys = ref<string[]>([]) //选中的模型
+const isShowModelResult = ref<boolean>(false) //是否显示搜索模型的结果
+const searchModelResult = ref<any[]>([]) //搜索模型的结果
 const checkedKeys = ref<string[]>([]) //勾选的模型
-const optionFields = ref<any[]>([])
-
-//搜索模型
-const handleSearchModel = () => {}
-const { eventBus } = useSmartsheetStoreOrThrow()
-//勾选模型
-const handleCheckModel = (checkedKeys: any, e: any) => {
-  console.log('checkedKeys', checkedKeys)
-  getCheckedModelData(checkedKeys)
-}
+const expandedKeys = ref<string[]>(['0-0', 'catalog'])
 
 onMounted(() => {
   getCheckedModelData(checkedKeys.value)
-  getCustomCatalogEntityTree()
 })
 
-const handleLoadFiles = (e: any, item: object) => {
-  e.stopPropagation()
-  axios
-    .post('http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/findBizCustomEntity', {
-      entityIds: item.id,
-    })
-    .then((res: any) => {
-      console.log('res', res?.data?.data?.datas)
-      let newDFata = chataiData.value.modelDataList
-      let fields = res?.data?.data?.datas[0].fields.map((item) => {
-        return { ...item, name_cn: item.fieldName_cn, key: item.id, title: item.fieldName_cn, parentId: item.id }
-      })
-      newDFata[1].children = fields
-      setModelDataList(newDFata)
-      console.log('modelDataList::', newDFata)
-    })
+//反选
+const handleReverseSelection = () => {
+  if (chataiData.value.modelData.length === checkedKeys.value.length) return
+  let originalSelected = [...checkedKeys.value]
+  let newCheckedKeys = chataiData.value.modelData.filter((item) => !checkedKeys.value.includes(item.id)).map((item) => item.id)
+  newCheckedKeys = newCheckedKeys.filter((key) => key !== '0-0' && key)
+  checkedKeys.value = newCheckedKeys
+  originalSelected.map((item) => cancelParentNode(item))
+  getCheckedModelData(checkedKeys.value)
 }
 
-const uncheckNodeOrDirectory = (nodeId: string) => {
-  const node = findNodeById(chataiData.value.modelDataList, nodeId)
-  console.log('none', node)
-  checkedKeys.value = checkedKeys.value.filter((item) => item !== nodeId)
-  if (!node) return
-  uncheckParent(node.parentId)
+//搜索模型
+const handleSearchModel = () => {
+  if (!searchModelText.value.trim()) {
+    handleClickCleanBtn()
+  } else {
+    let result: any[] = []
+    checkedKeys.value = checkedKeys.value.filter((item) => item !== 'catalog')
+    chataiData.value.modelTree.forEach((node) => {
+      searchNodes(node, result)
+    })
+    if (result.length > 0) {
+      searchModelResult.value = [
+        {
+          id: 'catalog',
+          name_cn: '模型目录',
+          parentId: '',
+          isCatalog: true,
+          children: result,
+          title: '模型目录',
+          key: 'catalog',
+        },
+      ]
+    } else {
+      searchModelResult.value = []
+    }
+    isShowModelResult.value = true
+  }
 }
 
-const findNodeById: any = (nodes: any, nodeId: string) => {
-  for (const node of nodes) {
-    if (node.id === nodeId) {
-      return node
-    } else if (node.children && node.children.length > 0) {
-      const found = findNodeById(node.children, nodeId)
-      if (found) return found
+// 递归搜索
+function searchNodes(nodeModel: any, results: any[]) {
+  if (nodeModel.isCatalog) {
+    if (nodeModel.name_cn.indexOf(searchModelText.value) > -1 && nodeModel.id !== null) {
+      results.push({ ...nodeModel })
+    } else {
+      if (nodeModel?.children.length) {
+        nodeModel.children.forEach((child: any) => {
+          searchNodes(child, results)
+        })
+      }
+    }
+  } else {
+    nodeModel.name_cn.indexOf(searchModelText.value) > -1 && results.push({ ...nodeModel })
+  }
+}
+
+//清空搜索内容
+const handleClickCleanBtn = () => {
+  searchModelText.value = ''
+  isShowModelResult.value = false
+  checkedKeys.value = checkedKeys.value.filter((item) => item !== 'catalog')
+}
+
+//勾选模型
+const handleCheckModel = (checkedKeysNew: any, e: any) => {
+  console.log('checkedKeysNew', checkedKeysNew)
+  if (e.checked) {
+    checkedKeysNew.map((item: string) => {
+      if (!checkedKeys.value.includes(item)) checkedKeys.value.push(item)
+    })
+  } else {
+    checkedKeys.value = checkedKeys.value.filter((key) => key !== e.node.id)
+    if (e.node.isCatalog) {
+      uncheckChildren(e.node.children)
+    }
+    cancelParentNode(e.node.parentId)
+    checkedKeys.value = checkedKeys.value.filter((key) => key !== '0-0')
+  }
+
+  getCheckedModelData(checkedKeys.value)
+}
+
+//取消勾选子节点
+const uncheckChildren = (children: any) => {
+  for (const child of children) {
+    checkedKeys.value = checkedKeys.value.filter((key) => key !== child.id)
+    if (child.isCatalog) {
+      uncheckChildren(child.children)
     }
   }
-  return null
 }
 
-const uncheckParent = (parentId: string) => {
-  const parentNode = findNodeById(chataiData.value.modelDataList, parentId)
-  if (!parentNode) return
-  checkedKeys.value = checkedKeys.value.filter((item) => item !== parentId)
-  uncheckParent(parentNode.parentId)
-}
-
+//删除已选模型发射的事件
 eventBus.on((event, id) => {
   if (event === SmartsheetStoreEvents.DELETE_MODE) {
-    uncheckNodeOrDirectory(id)
+    checkedKeys.value = checkedKeys.value.filter((item) => item !== id && item !== '0-0')
+    const node = chataiData.value.modelData.find((item) => item.id === id)
+    cancelParentNode(node.parentId)
   }
 })
+
+//取消勾选父节点
+const cancelParentNode = (nodeId: string) => {
+  const findNode = chataiData.value.modelData.find((item) => item.id === nodeId)
+  if (!findNode) return
+  checkedKeys.value = checkedKeys.value.filter((item) => item !== nodeId)
+  cancelParentNode(findNode.parentId)
+}
 </script>
 
 <template>
@@ -96,35 +149,52 @@ eventBus.on((event, id) => {
           <a-avatar shape="square" size="small" :src="model"> </a-avatar>
           <a-typography-title :level="4" class="select-text">选择范围</a-typography-title>
         </div>
-
-        <a-button class="colse-btn colse-btn2" @click="setIsOpenModel(false)" type="text">
-          <template #icon><close-outlined /></template>
-        </a-button>
+        <close-outlined class="colse-btn" @click="setIsOpenModel(false)" />
       </div>
-      <!-- 搜索模型 -->
+      <!-- 搜索模型-->
       <div class="search-model">
-        <a-input placeholder="搜索模型" v-model:value="searchModelText" allowClear>
+        <a-tooltip title="反选" placement="bottom" :overlayClassName="'reverse-selection-tip'">
+          <a-avatar
+            v-if="checkedKeys.length"
+            class="reverse-selection-icon"
+            size="small"
+            :src="reverseSelection"
+            @click="handleReverseSelection()"
+          >
+          </a-avatar>
+
+          <a-avatar class="reverse-selection-icon reverse-selection-icon-grey" v-else size="small" :src="reverseSelectionGrey">
+          </a-avatar>
+        </a-tooltip>
+
+        <a-input placeholder="搜索模型" @keyup.enter="handleSearchModel()" v-model:value="searchModelText">
           <template #suffix>
+            <CloseOutlined @click="handleClickCleanBtn()" v-show="searchModelText.trim()" style="margin-right: 5px" />
             <search-outlined @click="handleSearchModel()" />
           </template>
         </a-input>
       </div>
       <!-- 模型 -->
       <a-tree
+        :checkedKeys="checkedKeys"
+        v-model:expandedKeys="expandedKeys"
         checkable
-        autoExpandParent
-        :tree-data="chataiData.modelDataList"
-        v-model:checkedKeys="checkedKeys"
+        :tree-data="isShowModelResult ? searchModelResult : chataiData.modelTree"
+        v-if="(isShowModelResult && searchModelResult.length) || !isShowModelResult"
         @check="handleCheckModel"
       >
         <template #title="item">
-          <span v-if="item.isCatalog"> {{ item.title }}</span>
+          <span v-if="item.isCatalog">
+            <img :src="catalog" width="16" height="16" class="catlog-img" />
+            {{ item.title }}</span
+          >
           <div v-else class="model-text">
             {{ item.title }}
             <SmartsheetChataiCommonFilesSelect :modelItem="item" />
           </div>
         </template>
       </a-tree>
+      <div v-else class="no-data">暂无数据</div>
       <!-- 统计 -->
       <div class="total">
         <span
@@ -137,7 +207,36 @@ eventBus.on((event, id) => {
   </div>
 </template>
 
+<style lang="scss">
+.reverse-selection-tip {
+  .ant-tooltip-inner {
+    width: 43px;
+    display: flex;
+    justify-content: center;
+    border-radius: 8px;
+  }
+}
+</style>
 <style scoped lang="scss">
+.catlog-img {
+  display: inline-block;
+  vertical-align: -3px;
+}
+.reverse-selection-icon {
+  margin-right: 8px;
+  cursor: pointer;
+}
+.reverse-selection-icon-grey {
+  cursor: not-allowed;
+}
+.no-data {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 14px;
+}
 ::v-deep .ant-tree {
   .ant-tree-treenode {
     width: 100% !important;
@@ -169,6 +268,7 @@ eventBus.on((event, id) => {
   transition: 0.5s;
   overflow: hidden;
   box-sizing: border-box;
+
   .model-main {
     width: 100%;
     height: 100%;
@@ -184,28 +284,16 @@ eventBus.on((event, id) => {
     justify-content: space-between;
     align-items: center;
     box-sizing: border-box;
-    // outline: 1px solid red;
     .select-text {
       position: relative;
       left: 8px;
     }
     .colse-btn {
       position: relative;
+      top: 0px;
       color: rgb(99, 107, 116);
-      background-color: transparent;
-      border: none;
-      box-shadow: none;
-      &:active {
-        background-color: transparent;
-        box-shadow: none;
-      }
     }
-    .colse-btn2 {
-      width: 32px !important;
-      height: 32px !important;
-      right: -9px;
-      top: 1px;
-    }
+
     .ant-typography {
       font-size: 18px;
       margin: 0;
@@ -220,6 +308,8 @@ eventBus.on((event, id) => {
     }
   }
   .search-model {
+    display: flex;
+    align-items: center;
     margin: 16px 0;
     ::v-deep .ant-input-affix-wrapper {
       border-radius: 5px;

@@ -1,222 +1,136 @@
 import { reactive } from 'vue'
 
-import axios from 'axios'
 import { defineStore } from 'pinia'
+import type { SessionItem } from '~/components/smartsheet/chatai/interfac'
+
+import chataiApi from '../api/chatai'
 
 export const useChataiStore = defineStore('chataiStore', () => {
-  // 创建仓库数据
+  // 创建数据仓库
   const chataiData = reactive<{
-    tableData: any[]
-    modelDataList: any[]
+    modelData: any[]
+    modelTree: any[]
+    modelCatalog: any[]
+    modelCatalogTree: any[]
     checkedModelData: any[]
-    sessionItem: object
-    catalog: any[]
+    sessionItem: SessionItem
+    modelFields: {
+      [key: string]: any
+    }
   }>({
-    tableData: [
-      {
-        data: [
-          {
-            key: '1',
-            日期: '2022-01-01',
-            部门: '大客户部',
-            销售额: 1000,
-            成本: 800,
-            利润: 200,
-            客户数: 100,
-            平均交易: 66.67,
-          },
-          {
-            key: '2',
-            日期: '2022-02-01',
-            部门: '大客户部',
-            销售额: 1500,
-            成本: 900,
-            利润: 600,
-            客户数: 200,
-            平均交易: 75,
-          },
-          {
-            key: '3',
-            日期: '2022-03-01',
-            部门: '大客户部',
-            销售额: 1600,
-            成本: 900,
-            利润: 700,
-            客户数: 300,
-            平均交易: 66.67,
-          },
-          {
-            key: '4',
-            日期: '2023-04-01',
-            部门: '大客户部',
-            销售额: 700,
-            成本: 600,
-            利润: 200,
-            客户数: 400,
-            平均交易: 90,
-          },
-        ],
-        colums: [
-          { title: '日期', dataIndex: '日期' },
-          { title: '部门', dataIndex: '部门' },
-          { title: '销售额', dataIndex: '销售额' },
-          { title: '成本', dataIndex: '成本' },
-          { title: '利润', dataIndex: '利润' },
-          { title: '客户数', dataIndex: '客户数' },
-          { title: '平均交易', dataIndex: '平均交易' },
-        ],
-      },
-      {
-        data: [
-          { key: '1', student: 'studen1', yuwen: 109, yingyu: 89, shuxue: 140 },
-          { key: '2', student: 'studen2', yuwen: 119, yingyu: 90, shuxue: 100 },
-          { key: '3', student: 'studen3', yuwen: 99, yingyu: 89, shuxue: 88 },
-          { key: '4', student: 'stude4', yuwen: 88, yingyu: 70, shuxue: 99 },
-          { key: '5', student: 'stude5', yuwen: 90, yingyu: 89, shuxue: 98 },
-        ],
-        colums: [
-          { title: 'student', dataIndex: 'student' },
-          { title: 'yuwen', dataIndex: 'yuwen' },
-          { title: 'yingyu', dataIndex: 'yingyu' },
-          { title: 'shuxue', dataIndex: 'shuxue' },
-        ],
-      },
-    ],
-    modelDataList: [], //模型数据
+    modelData: [], //模型数据
+    modelTree: [], //模型树
+    modelCatalog: [], //模型目录
+    modelCatalogTree: [], //模型目录树
     checkedModelData: [], //选中的模型
-    sessionItem: {}, //展示的会话信息
-    catalog: [],
+    sessionItem: {
+      id: '',
+      textAreaValue: '',
+      sql: '',
+      selectedModel: '',
+      tabledata: '',
+      tip: '',
+    }, //展示的会话信息
+    modelFields: {}, //选择了的字段映射到对应模型
   })
 
-  const exeTrain = async (bizCatalogEntityCustom: any[]) => {
-    for (let i = 0; i < bizCatalogEntityCustom.length; i++) {
-      if (bizCatalogEntityCustom[i].isCatalog) {
-      } else {
-        let generateDDL = await axios.post(
-          'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/generateDDL',
-          {
-            entityIds: bizCatalogEntityCustom[i].id,
-            detail: false,
-          },
-        )
-        let ddl = generateDDL?.data?.data?.ddl
-        if (ddl) {
-          let ddlString = ddl?.join('\\')
-          await axios.post(
-            `https://c538-14-123-253-17.ngrok-free.app/api/v0/train?ddl=${encodeURIComponent(ddlString)}&id=${
-              bizCatalogEntityCustom[i].id
-            }&orgid=1&projectid=1`,
-          )
-        }
+  //删除没有模型的目录
+  const removeEmptyCatalogs = (data: any[]) => {
+    return data.filter((item) => {
+      if (item.isCatalog && item.children.every((child: any) => child.isCatalog && child.children.length === 0)) {
+        return false
       }
-    }
+      if (item.children && item.children.length > 0) {
+        item.children = removeEmptyCatalogs(item.children)
+      }
+
+      return true
+    })
+  }
+
+  // 构建树
+  const buildTree = (datas: any[], parentId = null): any[] => {
+    return datas
+      .filter((item: any) => item.parentId === parentId)
+      .map((item: any) => {
+        let children: any[] = item.isCatalog ? buildTree(datas, item.id) : []
+        return { ...item, title: item.name_cn, key: item.id, children, fields: [] }
+      })
   }
 
   //获取模型数据
   const getCustomCatalogEntityTree = async () => {
-    let result = await axios.post('http://databoard-test.yindangu.com/webapi/ydg_vmcdm_custom_api/getCustomCatalogEntityTree', {
-      data: {
-        customGroupId: null,
-        customOwnerId: null,
-        catalogId: '',
-        isCascade: true,
-        isPublish: true,
-      },
-    })
-    if (result?.data?.data?.bizCatalogEntityCustom) {
-      let bizCatalogEntityCustom = result?.data?.data?.bizCatalogEntityCustom
-      const buildTree = (items: any, parentId = null) => {
-        return items
-          .filter((item: any) => item.parentId === parentId)
-          .map((item: any) => {
-            let children = item?.isCatalog ? buildTree(items, item.id) : []
-            return { ...item, title: item.name_cn, key: item.id, children, fields: [] }
-          })
-      }
-      // exeTrain(bizCatalogEntityCustom)
-      const treeData = buildTree(bizCatalogEntityCustom)
-      chataiData.catalog = []
-      bizCatalogEntityCustom.map((item) => {
-        if (item.isCatalog) {
-          chataiData.catalog.push({ ...item })
-        }
+    let requestResults: any = await chataiApi.getCustomCatalogEntityTree()
+    if (requestResults?.success) {
+      let resultData = requestResults.data.bizCatalogEntityCustom
+      chataiData.modelData = resultData
+      chataiData.modelData.push({
+        id: null,
+        name_cn: '模型目录',
+        parentId: '',
+        isCatalog: true,
+        title: '模型目录',
+        key: '0-0',
       })
-      chataiData.catalog = buildTree(chataiData.catalog)
-      chataiData.modelDataList = treeData
-      console.log('模型目录1::', chataiData.catalog)
+      let buildRes = [
+        {
+          id: null,
+          name_cn: '模型目录',
+          parentId: '',
+          isCatalog: true,
+          children: buildTree(resultData),
+          title: '模型目录',
+          key: '0-0',
+        },
+      ]
+      // chataiData.modelTree = removeEmptyCatalogs(buildRes)
+      chataiData.modelTree = buildRes
+      chataiData.modelCatalog = chataiData.modelData.filter((item) => item.isCatalog && item.id !== null)
+      chataiData.modelCatalogTree = buildTree(chataiData.modelCatalog)
+      console.log('chataiData.modelCatalogTree', chataiData.modelCatalogTree)
+      console.log('chataiData.modelData', chataiData.modelData)
     }
   }
 
-  //查找勾选的模型节点
-  const filterCheckedNodes = (data: any[], key: string) => {
-    const checkedNodes: any[] = []
-    const traverse = (nodes: any, key: string) => {
-      for (const node of nodes) {
-        if (!node.isCatalog && node.key === key) {
-          checkedNodes.push(node)
-          return
-        }
-        if (node.isCatalog && node.children) {
-          traverse(node.children, key)
-        }
-        // if (node.children) traverse(node.children, key)
-      }
-    }
-    traverse(data, key)
-    return checkedNodes
+  //设置展示的会话信息
+  const setSessionItem = (data: SessionItem) => {
+    chataiData.sessionItem = data
   }
 
   //获取勾选的模型
   const getCheckedModelData = (checkedKeys: string[]) => {
-    if (!checkedKeys.length) {
-      chataiData.checkedModelData = []
-      return
-    }
-    chataiData.checkedModelData = checkedKeys.reduce((accumulator: any[], currentValue: string) => {
-      let checkedNodes = filterCheckedNodes(chataiData.modelDataList, currentValue)
-      return [...accumulator, ...checkedNodes]
-    }, [])
+    chataiData.checkedModelData = checkedKeys
+      .map((checkedKey) => {
+        let findNode = chataiData.modelData.find((item) => item.id === checkedKey)
+        if (!findNode) findNode = { isCatalog: true, id: null }
+        if (chataiData.modelFields.hasOwnProperty(findNode.id)) {
+          findNode.fields = chataiData.modelFields[findNode.id].map((item: any) => ({ ...item }))
+        } else {
+          findNode.fields = []
+        }
+        return findNode
+      })
+      .filter((item) => !item.isCatalog)
   }
 
-  const setModelDataList = (data: any) => {
-    chataiData.modelDataList = data
+  //设置模型已选字段
+  const setModelFields = (id: string, fields: any[]) => {
+    chataiData.modelFields[id] = fields
+    let findModel = chataiData.checkedModelData.find((item) => item.id === id)
+    if (findModel) findModel.fields = fields.map((item) => ({ ...item }))
   }
 
-  //设置展示的会话信息
-  const setSessionItem = (data: any) => {
-    chataiData.sessionItem = data
-  }
-
-  //设置选中模型
-  const setCheckedModelData = (file: any[], modelItem: string) => {
-    let findItem = chataiData.checkedModelData.find((item) => item.id === modelItem?.id)
-    if (!findItem) return
-    findItem.fields = file
+  // 删除模型
+  const deleteModel = (id: string) => {
+    chataiData.checkedModelData = chataiData.checkedModelData.filter((item) => item.id !== id)
   }
 
   //删除字段
-  const deleteFile = (file: any, id: string) => {
-    let findItem = chataiData.checkedModelData.find((item) => item.id === id)
-    if (!findItem) return
-    let findIndex = findItem.fields.findIndex((item) => item.id === file.id)
-    findItem.fields.splice(findIndex, 1)
-    if (!findItem?.fields?.length) delete findItem.fields
-    // const updatedItems = chataiData.checkedModelData.reduce((acc, item) => {
-    //   if (item.id === id) {
-    //     const updatedTest = item.fields.filter((subItem) => subItem.id !== file.id)
-    //     if(!)
-    //     acc.push({ ...item, fields: updatedTest })
-    //   } else {
-    //     acc.push(item)
-    //   }
-    //   return acc
-    // }, [])
-    // console.log('updatedItems::', updatedItems)
-    // chataiData.checkedModelData = updatedItems
-  }
-
-  const deleteModel = (id: string) => {
-    chataiData.checkedModelData = chataiData.checkedModelData.filter((item) => item.id !== id)
+  const deleteFile = (field: any, modelId: string) => {
+    let findModelItem = chataiData.checkedModelData.find((item) => item.id === modelId)
+    let fields = chataiData.modelFields[modelId].filter((item: any) => item.id !== field.id)
+    findModelItem.fields = fields
+    chataiData.modelFields[modelId] = fields
   }
 
   return {
@@ -224,13 +138,9 @@ export const useChataiStore = defineStore('chataiStore', () => {
     setSessionItem,
     getCustomCatalogEntityTree,
     getCheckedModelData,
-    setModelDataList,
-    setCheckedModelData,
     deleteFile,
     deleteModel,
+    setModelFields,
+    buildTree,
   }
 })
-
-if (import.meta.hot) {
-  import.meta.hot.accept(acceptHMRUpdate(useTablesStore as any, import.meta.hot))
-}

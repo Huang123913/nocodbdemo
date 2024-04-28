@@ -10,7 +10,7 @@
 <style scoped lang="scss">
 .chatai-content {
   width: 100%;
-  height: 100%;
   display: flex;
+  height: calc(100vh - var(--topbar-height));
 }
 </style>

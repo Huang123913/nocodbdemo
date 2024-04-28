@@ -5,124 +5,69 @@ import { CloseOutlined, DownOutlined } from '@ant-design/icons-vue'
 
 import { useChataiStore } from '../../../../store/chatai'
 
-const store1 = useChataiStore()
-const { chataiData } = storeToRefs(store1)
-const { deleteFile, deleteModel } = store1
-// const props = defineProps<{
-//   checkedModelData: any[]
-//   setIsOpenModel: (value: boolean) => void
-// }>()
+const { eventBus } = useSmartsheetStoreOrThrow()
 
+const store = useChataiStore()
+const { chataiData } = storeToRefs(store)
+const { deleteFile, deleteModel } = store
+const visible = ref<boolean>(false)
+const clicked = ref<boolean>(false) //是否显示选择字段弹框
 // 删除模型
 const handleDeleteModelItem = (item: any) => {
   deleteModel(item.id)
   eventBus.emit(SmartsheetStoreEvents.DELETE_MODE, item.id)
 }
-const visible = ref<boolean>(false)
-onMounted(() => {})
 
-const { eventBus } = useSmartsheetStoreOrThrow()
-
+//删除字段
 const handleDeleteFile = (deleteFile1: any, id: string) => {
   deleteFile(deleteFile1, id)
-  eventBus.emit(SmartsheetStoreEvents.DELETE_FILE)
-  console.log('chataiData.value.checkedModelData::', chataiData.value.checkedModelData)
-}
-const handleMenuClick = (e: any) => {
-  visible.value = true
-}
-const titleClickHandle = () => {
-  visible.value = true
 }
 
-const fieldsStr = computed(() => {
-  let newData: any[] = []
-  chataiData.value.checkedModelData.map((item) => {
-    if (item?.fields && item.fields.length) {
-      newData.push(item)
-    }
-  })
-  return newData
-})
-
-const noFieldsStr = computed(() => {
-  let newData: any[] = []
-  chataiData.value.checkedModelData.map((item) => {
-    if (!item?.fields || !item.fields.length) {
-      newData.push(item)
-    }
-  })
-  console.log('newData1::', newData)
-  return newData
-})
+const handleClickChange = (visible: boolean) => {
+  clicked.value = visible
+}
 </script>
 
 <template>
-  <a-dropdown placement="top" v-if="chataiData.checkedModelData.length">
+  <a-popover
+    v-if="chataiData.checkedModelData.length"
+    placement="top"
+    color="white"
+    trigger="click"
+    :visible="clicked"
+    :overlayClassName="'chatai2-tooltip'"
+    @visibleChange="handleClickChange"
+  >
+    <template #content>
+      <a-list size="small" :data-source="chataiData.checkedModelData">
+        <template #renderItem="{ item, index }">
+          <a-list-item v-if="!item?.fields || item.fields.length === 0">
+            <div class="model-item">
+              <span> {{ item.name_cn }}</span> <close-outlined class="colse-btn1" @click="handleDeleteModelItem(item)" />
+            </div>
+          </a-list-item>
+          <a-popover v-else placement="right" :overlayClassName="'chatai2-tooltip'" color="white">
+            <template #content>
+              <a-list size="small" :data-source="item.fields">
+                <template #renderItem="{ item }">
+                  <a-list-item>
+                    <span> {{ item.fieldName }}</span>
+                    <close-outlined class="colse-btn1" @click="handleDeleteFile(item, chataiData.checkedModelData[index].id)" />
+                  </a-list-item>
+                </template>
+              </a-list>
+            </template>
+            <span> {{ item.name_cn }}</span>
+            <close-outlined class="colse-btn1" @click="handleDeleteModelItem(chataiData.checkedModelData[index])" />
+          </a-popover>
+        </template>
+      </a-list>
+    </template>
     <a class="ant-dropdown-link1" @click.prevent>
       {{ `已选范围(${chataiData.checkedModelData.length})` }}
       <DownOutlined />
     </a>
-    <template #overlay>
-      <a-menu @click="handleMenuClick">
-        <a-sub-menu
-          v-for="item in fieldsStr"
-          :key="item.id"
-          :title="item.name_cn"
-          @titleClick="titleClickHandle"
-          @click="handleMenuClick"
-        >
-          <a-menu-item v-for="item1 in item?.fields" @click="handleMenuClick">
-            {{ item1.fieldName || item1.fieldLabel }}
-            <template #icon>
-              <a-button
-                class="colse-btn close-btn1"
-                @click="
-                  (e) => {
-                    e.stopPropagation()
-                    handleDeleteFile(item1, item.id)
-                  }
-                "
-                type="text"
-              >
-                <!-- <template #icon><close-outlined /></template> -->
-              </a-button>
-            </template>
-          </a-menu-item>
-          <template #expandIcon
-            ><a-button
-              class="colse-btn"
-              @click="
-                (e) => {
-                  e.stopPropagation()
-                  handleDeleteModelItem(item)
-                }
-              "
-              type="text"
-            >
-              <template #icon><close-outlined /></template> </a-button
-          ></template>
-        </a-sub-menu>
-        <a-menu-item v-for="item in noFieldsStr">
-          {{ item.name_cn }}
-          <template #icon>
-            <a-button
-              class="colse-btn close-btn1"
-              @click="
-                (e) => {
-                  e.stopPropagation()
-                  handleDeleteModelItem(item)
-                }
-              "
-              type="text"
-            >
-              <template #icon><close-outlined /></template>
-            </a-button>
-          </template>
-        </a-menu-item>
-      </a-menu>
-    </template>
-  </a-dropdown>
+  </a-popover>
 
   <a-dropdown v-else>
     <a class="ant-dropdown-link1" @click.prevent>
@@ -133,6 +78,67 @@ const noFieldsStr = computed(() => {
 </template>
 
 <style lang="scss">
+.model-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.colse-btn1 {
+  opacity: 0;
+}
+.anticon-close {
+  display: flex;
+  align-items: center;
+  margin-left: 32px;
+}
+.chatai2-tooltip {
+  .ant-list-split .ant-list-item {
+    border: none !important;
+    padding: 6px 16px !important;
+    cursor: pointer;
+    &:hover {
+      background-color: #f5f5f5;
+    }
+    &:hover .colse-btn1 {
+      opacity: 1;
+    }
+  }
+}
+
+.ant-list-items {
+  > span {
+    display: flex;
+    padding: 6px 16px;
+    justify-content: space-between;
+    cursor: pointer;
+    &:hover {
+      background-color: #f5f5f5;
+    }
+    &:hover .colse-btn1 {
+      opacity: 1;
+    }
+  }
+}
+
+.chatai2-tooltip {
+  .ant-popover-inner {
+    min-width: 180px;
+  }
+  .ant-popover-arrow {
+    display: none;
+  }
+  .ant-popover-title {
+    border: none;
+    padding: 14px 16px 0px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ant-popover-inner-content {
+    padding: 8px 0 !important;
+  }
+}
 .ant-dropdown-menu {
   min-width: 200px;
   padding: 16px 8px !important;
