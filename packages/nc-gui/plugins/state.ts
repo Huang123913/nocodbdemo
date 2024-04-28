@@ -27,7 +27,7 @@ const statePlugin = async (_nuxtApp) => {
   await Promise.all([loadLocaleMessages(currentLang), loadLocaleMessages('en')])
 
   /** set i18n locale to stored language */
-  await setI18nLanguage(currentLang)
+  await setI18nLanguage('zh-Hans')
 
   try {
     state.appInfo.value = await api.utils.appInfo()
