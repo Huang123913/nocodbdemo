@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, useSmartsheetStoreOrThrow } from '#imports'
+import { ref, useSmartsheetStoreOrThrow, watch } from '#imports'
 
 import { CloseOutlined, SearchOutlined } from '@ant-design/icons-vue'
 
@@ -22,21 +22,39 @@ const { getCheckedModelData, setChataiDataIsOpenMode } = store
 const searchModelText = ref<string>('') //搜索模型文本
 const isShowModelResult = ref<boolean>(false) //是否显示搜索模型的结果
 const searchModelResult = ref<any[]>([]) //搜索模型的结果
+const searchModelResultTree = ref<any[]>([]) //搜索模型的结果
 const checkedKeys = ref<string[]>([]) //勾选的模型
 const expandedKeys = ref<string[]>(['0-0', 'catalog'])
-
 onMounted(() => {
   getCheckedModelData(checkedKeys.value)
 })
 
+// 是否可以反选
+const isCanResverSession = computed(() => {
+  if (isShowModelResult.value) {
+    return searchModelResult.value.some((item) => checkedKeys.value.includes(item.id))
+  } else {
+    return checkedKeys.value.length
+  }
+})
+
 //反选
 const handleReverseSelection = () => {
-  if (chataiData.value.modelData.length === checkedKeys.value.length) return
-  let originalSelected = [...checkedKeys.value]
-  let newCheckedKeys = chataiData.value.modelData.filter((item) => !checkedKeys.value.includes(item.id)).map((item) => item.id)
-  newCheckedKeys = newCheckedKeys.filter((key) => key !== '0-0' && key)
-  checkedKeys.value = newCheckedKeys
-  originalSelected.map((item) => cancelParentNode(item))
+  if (isShowModelResult.value) {
+    if (searchModelResult.value.every((item) => checkedKeys.value.includes(item.id))) return
+    let newCheckedKeys = searchModelResult.value.filter((item) => !checkedKeys.value.includes(item.id)).map((item) => item.id)
+    let checkedKeysBySearch = searchModelResult.value.filter((item) => checkedKeys.value.includes(item.id)).map((item) => item.id)
+    newCheckedKeys = newCheckedKeys.filter((key) => key !== 'catalog' && key)
+    checkedKeys.value.push(...newCheckedKeys)
+    checkedKeysBySearch.map((item) => cancelParentNode(item))
+  } else {
+    if (chataiData.value.modelData.length === checkedKeys.value.length) return
+    let originalSelected = [...checkedKeys.value]
+    let newCheckedKeys = chataiData.value.modelData.filter((item) => !checkedKeys.value.includes(item.id)).map((item) => item.id)
+    newCheckedKeys = newCheckedKeys.filter((key) => key !== '0-0' && key)
+    checkedKeys.value = newCheckedKeys
+    originalSelected.map((item) => cancelParentNode(item))
+  }
   getCheckedModelData(checkedKeys.value)
 }
 
@@ -51,7 +69,7 @@ const handleSearchModel = () => {
       searchNodes(node, result)
     })
     if (result.length > 0) {
-      searchModelResult.value = [
+      searchModelResultTree.value = [
         {
           id: 'catalog',
           name_cn: '模型目录',
@@ -62,7 +80,16 @@ const handleSearchModel = () => {
           key: 'catalog',
         },
       ]
+      searchModelResult.value = []
+      searchModelResultTree.value.map((item) => {
+        searchModelResult.value.push({ ...item })
+        if (item.isCatalog) {
+          getSearchModelResult(item.children)
+        }
+      })
+      console.log('searchModelResult::', searchModelResult.value)
     } else {
+      searchModelResultTree.value = []
       searchModelResult.value = []
     }
     isShowModelResult.value = true
@@ -86,6 +113,16 @@ function searchNodes(nodeModel: any, results: any[]) {
   }
 }
 
+//获取搜索模型的数据
+const getSearchModelResult = (nodes: any) => {
+  nodes.map((item) => {
+    searchModelResult.value.push({ ...item })
+    if (item.isCatalog) {
+      getSearchModelResult(item.children)
+    }
+  })
+}
+
 //清空搜索内容
 const handleClickCleanBtn = () => {
   searchModelText.value = ''
@@ -106,7 +143,7 @@ const handleCheckModel = (checkedKeysNew: any, e: any) => {
       uncheckChildren(e.node.children)
     }
     cancelParentNode(e.node.parentId)
-    checkedKeys.value = checkedKeys.value.filter((key) => key !== '0-0')
+    checkedKeys.value = checkedKeys.value.filter((key) => key !== '0-0' && key !== 'catalog')
   }
 
   getCheckedModelData(checkedKeys.value)
@@ -155,7 +192,7 @@ const cancelParentNode = (nodeId: string) => {
       <div class="search-model">
         <a-tooltip title="反选" placement="bottom" :overlayClassName="'reverse-selection-tip'">
           <a-avatar
-            v-if="checkedKeys.length"
+            v-if="isCanResverSession"
             class="reverse-selection-icon"
             size="small"
             :src="reverseSelection"
@@ -179,8 +216,8 @@ const cancelParentNode = (nodeId: string) => {
         :checkedKeys="checkedKeys"
         v-model:expandedKeys="expandedKeys"
         checkable
-        :tree-data="isShowModelResult ? searchModelResult : chataiData.modelTree"
-        v-if="(isShowModelResult && searchModelResult.length) || !isShowModelResult"
+        :tree-data="isShowModelResult ? searchModelResultTree : chataiData.modelTree"
+        v-if="(isShowModelResult && searchModelResultTree.length) || !isShowModelResult"
         @check="handleCheckModel"
       >
         <template #title="item">
