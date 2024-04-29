@@ -230,7 +230,7 @@ const cancelParentNode = (nodeId: string) => {
   cursor: not-allowed;
 }
 .no-data {
-  flex: 1;
+  height: calc(100vh - var(--topbar-height) - 194px);
   display: flex;
   align-items: center;
   justify-content: center;
