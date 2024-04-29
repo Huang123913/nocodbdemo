@@ -25,6 +25,12 @@ const exeTrain = async (bizCatalogEntityCustom: any[]) => {
   }
 }
 onMounted(async () => {
+  let data = {
+    orgid: 1,
+    projectid: 1,
+    types: JSON.stringify(['ddl', 'sqlquestion']),
+  }
+  await axios.post(`https://c538-14-123-253-17.ngrok-free.app/api/v0/cleartrain?${new URLSearchParams(data).toString()}`)
   let result = await axios.post('http://databoard-test.yindangu.com/webapi/ydg_vmcdm_custom_api/getCustomCatalogEntityTree', {
     data: {
       customGroupId: null,
@@ -42,7 +48,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>ceshi</div>
+  <div></div>
 </template>
 
 <style scoped></style>
