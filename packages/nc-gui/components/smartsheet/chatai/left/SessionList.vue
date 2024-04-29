@@ -134,6 +134,7 @@ const handleSend = async () => {
   isShowLoading.value = true
   const id = uuidv4()
   let modelrange = await getModelrange()
+  // 执行获取sql api
   let getSqlRes = await chataiApi
     .getSqlApi(`${textAreaValue.value}`, id, modelrange)
     .catch((err) => (isShowLoading.value = false))
@@ -148,7 +149,9 @@ const handleSend = async () => {
     sql = sql.replace(/;/g, '')
     let queryBizCustomEntityData = await chataiApi.exeSql({ sql }).catch((err) => (isShowLoading.value = false))
     if (!queryBizCustomEntityData?.success || !queryBizCustomEntityData?.data.success) {
-      let err_msg = queryBizCustomEntityData?.success ? queryBizCustomEntityData?.data.errorDetail : queryBizCustomEntityData.msg
+      let err_msg = queryBizCustomEntityData?.success
+        ? queryBizCustomEntityData?.data.errorDetail
+        : queryBizCustomEntityData?.data.errorDetail.allStackMsg
       let newExeRes = await callRepairWithRetry(sqlId, err_msg, textAreaValue.value)
       if (!newExeRes?.success || !newExeRes?.data.success) {
         message.warning('抱歉，我不能理解你的问题，请调整后再重试')
