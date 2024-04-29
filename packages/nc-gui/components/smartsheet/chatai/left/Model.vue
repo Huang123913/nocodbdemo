@@ -201,7 +201,7 @@ const cancelParentNode = (nodeId: string) => {
           >已选择<strong>{{ chataiData.checkedModelData.length }}</strong
           >项模型</span
         >
-        <a-button type="primary" size="middle" class="confirm-btn" @click="setIsOpenModel(false)">确定</a-button>
+        <a-button type="primary" size="middle" class="confirm-btn" @click="setChataiDataIsOpenMode(false)">确定</a-button>
       </div>
     </div>
   </div>
