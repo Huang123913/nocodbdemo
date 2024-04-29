@@ -14,6 +14,7 @@ export const useChataiStore = defineStore('chataiStore', () => {
     modelCatalogTree: any[]
     checkedModelData: any[]
     sessionItem: SessionItem
+    isOpenModel: boolean
     modelFields: {
       [key: string]: any
     }
@@ -32,6 +33,7 @@ export const useChataiStore = defineStore('chataiStore', () => {
       tip: '',
     }, //展示的会话信息
     modelFields: {}, //选择了的字段映射到对应模型
+    isOpenModel: false,
   })
 
   //删除没有模型的目录
@@ -133,6 +135,10 @@ export const useChataiStore = defineStore('chataiStore', () => {
     chataiData.modelFields[modelId] = fields
   }
 
+  const setChataiDataIsOpenMode = (value: boolean) => {
+    chataiData.isOpenModel = value
+  }
+
   return {
     chataiData,
     setSessionItem,
@@ -142,5 +148,6 @@ export const useChataiStore = defineStore('chataiStore', () => {
     deleteModel,
     setModelFields,
     buildTree,
+    setChataiDataIsOpenMode,
   }
 })

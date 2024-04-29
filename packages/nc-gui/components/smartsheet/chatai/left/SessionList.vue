@@ -11,7 +11,7 @@ import type { SessionItem } from '../interfac'
 
 const store = useChataiStore()
 const { chataiData } = storeToRefs(store)
-const { setSessionItem, getCustomCatalogEntityTree } = store
+const { setSessionItem, getCustomCatalogEntityTree, setChataiDataIsOpenMode } = store
 
 const searchSessionText = ref<string>('') //搜索会话文本
 const isShowSearchSessionResult = ref<boolean>(false) //是否显示搜索的会话结果
@@ -25,7 +25,7 @@ const selectedSessionItem = ref<SessionItem>({
   tabledata: '',
   tip: '',
 }) //被选中的会话
-const isOpenModel = ref<boolean>(false) //是否打开模型数据模块
+// const isOpenModel = ref<boolean>(false) //是否打开模型数据模块
 const isShowLoading = ref<boolean>(false) //加载效果
 const textAreaValue = ref<string>('') //查询内容
 const locale = {
@@ -95,9 +95,10 @@ const handleDeleteSessionItem = (deleteItem: SessionItem) => {
 }
 
 //设置是否打开模型
-const setIsOpenModel = (value: boolean) => {
-  isOpenModel.value = value
-}
+// const setIsOpenModel = (value: boolean) => {
+//   isOpenModel.value = value
+//   setChataiDataIsOpenMode(value)
+// }
 
 //获取查询范围
 const getModelrange = async () => {
@@ -147,7 +148,7 @@ const handleSend = async () => {
     sql = sql.replace(/;/g, '')
     let queryBizCustomEntityData = await chataiApi.exeSql({ sql }).catch((err) => (isShowLoading.value = false))
     if (!queryBizCustomEntityData?.success || !queryBizCustomEntityData?.data.success) {
-      let err_msg = queryBizCustomEntityData?.success ? queryBizCustomEntityData?.data.errorMessage : queryBizCustomEntityData.msg
+      let err_msg = queryBizCustomEntityData?.success ? queryBizCustomEntityData?.data.errorDetail : queryBizCustomEntityData.msg
       let newExeRes = await callRepairWithRetry(sqlId, err_msg, textAreaValue.value)
       if (!newExeRes?.success || !newExeRes?.data.success) {
         message.warning('抱歉，我不能理解你的问题，请调整后再重试')
@@ -261,7 +262,9 @@ const handleSend = async () => {
         </template>
         <SmartsheetChataiCommonPopover />
         <div class="btn-right">
-          <a-button type="primary" size="middle" class="select-btn send-btn" @click="setIsOpenModel(true)"> 选择范围 </a-button>
+          <a-button type="primary" size="middle" class="select-btn send-btn" @click="setChataiDataIsOpenMode(true)">
+            选择范围
+          </a-button>
           <a-button type="primary" size="middle" class="send-btn" @click="handleSend()">
             发送
             <send-outlined />
@@ -270,7 +273,7 @@ const handleSend = async () => {
       </a-card>
     </div>
     <!-- 选择模型 -->
-    <SmartsheetChataiLeftModel :isOpenModel="isOpenModel" :setIsOpenModel="setIsOpenModel" />
+    <!-- <SmartsheetChataiLeftModel :isOpenModel="isOpenModel" :setIsOpenModel="setIsOpenModel" /> -->
     <!-- 加载效果 -->
     <SmartsheetChataiCommonLoading :isShow="isShowLoading" />
   </div>

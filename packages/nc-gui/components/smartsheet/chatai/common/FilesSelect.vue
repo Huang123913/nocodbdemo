@@ -59,7 +59,7 @@ const handleChange = (value: string[], option: any) => {
 <template>
   <a-popover
     trigger="click"
-    placement="right"
+    placement="bottomRight"
     color="white"
     :visible="clicked"
     :overlayClassName="'chatai1-tooltip'"

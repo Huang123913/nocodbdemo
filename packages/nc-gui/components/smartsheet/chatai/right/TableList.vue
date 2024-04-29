@@ -192,66 +192,69 @@ const handleEdit = (value: boolean) => {
 </script>
 
 <template>
-  <div class="table-list-content" v-show="isShow">
-    <div class="table-list-header">
-      <div class="table-list-header-left">
-        <a-typography-text class="list-item-left-content-textAreaValue">
-          <span v-if="!isEdited" class="edit-content"
-            ><span class="edit-text"> {{ chataiData.sessionItem?.textAreaValue }}</span>
-            <EditOutlined :title="isEdited ? '确认修改' : '编辑'" class="edit-outlined" @click="handleEdit(true)"
-          /></span>
-          <a-input v-else v-model:value="editText">
-            <template #suffix>
-              <EditOutlined :title="isEdited ? '确认修改' : '编辑'" @click="handleEdit(false)" />
-            </template>
-          </a-input>
-        </a-typography-text>
+  <div style="width: 50%; position: relative; overflow: hidden; height: 100%">
+    <SmartsheetChataiLeftModel />
+    <div class="table-list-content" v-show="isShow">
+      <div class="table-list-header">
+        <div class="table-list-header-left">
+          <a-typography-text class="list-item-left-content-textAreaValue">
+            <span v-if="!isEdited" class="edit-content"
+              ><span class="edit-text"> {{ chataiData.sessionItem?.textAreaValue }}</span>
+              <EditOutlined :title="isEdited ? '确认修改' : '编辑'" class="edit-outlined" @click="handleEdit(true)"
+            /></span>
+            <a-input v-else v-model:value="editText">
+              <template #suffix>
+                <EditOutlined :title="isEdited ? '确认修改' : '编辑'" @click="handleEdit(false)" />
+              </template>
+            </a-input>
+          </a-typography-text>
 
-        <a-typography-text>{{
-          chataiData.sessionItem?.selectedModel
-            ? JSON.parse(chataiData.sessionItem.selectedModel)
-                .map((item: any) => item.name_cn)
-                .join(';')
-            : ''
-        }}</a-typography-text>
-        <a-typography-text>
-          {{ chataiData.sessionItem?.sql }}
-        </a-typography-text>
+          <a-typography-text>{{
+            chataiData.sessionItem?.selectedModel
+              ? JSON.parse(chataiData.sessionItem.selectedModel)
+                  .map((item: any) => item.name_cn)
+                  .join(';')
+              : ''
+          }}</a-typography-text>
+          <a-typography-text>
+            {{ chataiData.sessionItem?.sql }}
+          </a-typography-text>
+        </div>
+        <a-button class="save-btn" type="primary" size="middle" @click="handleSaveBtn()"> 发布 </a-button>
       </div>
-      <a-button class="save-btn" type="primary" size="middle" @click="handleSaveBtn()"> 发布 </a-button>
-    </div>
-    <!-- 表格数据 -->
-    <div class="table-data">
-      <a-table :pagination="false" class="ant-table-striped" :columns="columns" :data-source="tableData" :scroll="{ y: 500 }">
-        <template #headerCell="{ title, column }">
-          <a-tooltip :title="column.name_en" :overlayClassName="'reverse-selection-tip'">
-            <span>{{ title }}</span>
-          </a-tooltip>
-        </template>
-      </a-table>
-    </div>
-    <a-modal
-      class="catalog-modal"
-      v-model:visible="showModal"
-      title="选择模型目录"
-      @ok="handleOk"
-      cancelText="取消"
-      okText="确认"
-    >
-      <a-tree
-        blockNode
-        class="catalog"
-        :tree-data="chataiData.modelCatalogTree"
-        v-model:selectedKeys="selectedKeys"
-        v-model:expandedKeys="expandedKeys"
+      <!-- 表格数据 -->
+      <div class="table-data">
+        <a-table :pagination="false" class="ant-table-striped" :columns="columns" :data-source="tableData" :scroll="{ y: 500 }">
+          <template #headerCell="{ title, column }">
+            <a-tooltip :title="column.name_en" :overlayClassName="'reverse-selection-tip'">
+              <span style="cursor: default">{{ title }}</span>
+            </a-tooltip>
+          </template>
+        </a-table>
+      </div>
+      <a-modal
+        class="catalog-modal"
+        v-model:visible="showModal"
+        title="选择模型目录"
+        @ok="handleOk"
+        cancelText="取消"
+        okText="确认"
       >
-        <template #title="item">
-          <span> {{ item.name_cn }}</span>
-        </template>
-      </a-tree>
-    </a-modal>
+        <a-tree
+          blockNode
+          class="catalog"
+          :tree-data="chataiData.modelCatalogTree"
+          v-model:selectedKeys="selectedKeys"
+          v-model:expandedKeys="expandedKeys"
+        >
+          <template #title="item">
+            <span> {{ item.name_cn }}</span>
+          </template>
+        </a-tree>
+      </a-modal>
 
-    <SmartsheetChataiCommonLoading :isShow="isShowLoading" />
+      <SmartsheetChataiCommonLoading :isShow="isShowLoading" />
+    </div>
   </div>
 </template>
 
@@ -299,7 +302,7 @@ const handleEdit = (value: boolean) => {
   }
 }
 .table-list-content {
-  width: 50%;
+  width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;

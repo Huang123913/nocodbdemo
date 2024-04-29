@@ -11,14 +11,14 @@ import { useChataiStore } from '../../../../store/chatai'
 
 const { eventBus } = useSmartsheetStoreOrThrow()
 
-const props = defineProps<{
-  isOpenModel: boolean
-  setIsOpenModel: (value: boolean) => void
-}>()
+// const props = defineProps<{
+//   isOpenModel: boolean
+//   setIsOpenModel: (value: boolean) => void
+// }>()
 
 const store = useChataiStore()
 const { chataiData } = storeToRefs(store)
-const { getCheckedModelData } = store
+const { getCheckedModelData, setChataiDataIsOpenMode } = store
 const searchModelText = ref<string>('') //搜索模型文本
 const isShowModelResult = ref<boolean>(false) //是否显示搜索模型的结果
 const searchModelResult = ref<any[]>([]) //搜索模型的结果
@@ -141,15 +141,15 @@ const cancelParentNode = (nodeId: string) => {
 </script>
 
 <template>
-  <div class="model-content" :style="{ width: isOpenModel ? '40%' : 0 }">
-    <div class="model-main" :style="{ display: isOpenModel ? 'flex' : 'none' }">
+  <div class="model-content" :style="{ width: chataiData.isOpenModel ? '100%' : 0 }">
+    <div class="model-main">
       <!-- 顶部 -->
       <div class="top-title">
         <div class="top-title-left">
           <a-avatar shape="square" size="small" :src="model"> </a-avatar>
           <a-typography-title :level="4" class="select-text">选择范围</a-typography-title>
         </div>
-        <close-outlined class="colse-btn" @click="setIsOpenModel(false)" />
+        <close-outlined class="colse-btn" @click="setChataiDataIsOpenMode(false)" />
       </div>
       <!-- 搜索模型-->
       <div class="search-model">
@@ -264,11 +264,14 @@ const cancelParentNode = (nodeId: string) => {
 }
 
 .model-content {
+  width: 0;
   height: 100%;
   transition: 0.5s;
   overflow: hidden;
   box-sizing: border-box;
-
+  position: absolute;
+  z-index: 99;
+  background-color: white;
   .model-main {
     width: 100%;
     height: 100%;
@@ -334,7 +337,7 @@ const cancelParentNode = (nodeId: string) => {
     background-color: rgb(11, 107, 203);
   }
   ::v-deep .ant-tree {
-    flex: 1;
+    height: calc(100vh - var(--topbar-height) - 194px);
     width: 100%;
     overflow-y: auto;
     overflow-x: hidden;
