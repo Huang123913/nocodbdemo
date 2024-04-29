@@ -23,7 +23,12 @@ const columns = computed(() => {
   let result = JSON.parse(chataiData.value.sessionItem.tabledata).fields
   let fileds = result?.filter((item) => item.name !== 'id')
   let newFileds = fileds?.map((item) => {
-    return { ...item, title: item.name, dataIndex: item.name }
+    return {
+      ...item,
+      title: item.name_cn ?? item.name ?? item.code,
+      dataIndex: item.name ?? item.code,
+      name_en: item.name ?? item.code,
+    }
   })
   return newFileds
 })
@@ -33,7 +38,6 @@ const tableData = computed(() => {
   let result = JSON.parse(chataiData.value.sessionItem.tabledata).datas
   let newDatas = result?.map((item) => {
     let newItem = { ...item }
-    delete newItem?.id
     return newItem
   })
   return newDatas
@@ -218,7 +222,13 @@ const handleEdit = (value: boolean) => {
     </div>
     <!-- 表格数据 -->
     <div class="table-data">
-      <a-table :pagination="false" class="ant-table-striped" :columns="columns" :data-source="tableData" :scroll="{ y: 500 }" />
+      <a-table :pagination="false" class="ant-table-striped" :columns="columns" :data-source="tableData" :scroll="{ y: 500 }">
+        <template #headerCell="{ title, column }">
+          <a-tooltip :title="column.name_en" :overlayClassName="'reverse-selection-tip'">
+            <span>{{ title }}</span>
+          </a-tooltip>
+        </template>
+      </a-table>
     </div>
     <a-modal
       class="catalog-modal"

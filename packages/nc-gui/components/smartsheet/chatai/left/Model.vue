@@ -210,7 +210,7 @@ const cancelParentNode = (nodeId: string) => {
 <style lang="scss">
 .reverse-selection-tip {
   .ant-tooltip-inner {
-    width: 43px;
+    min-width: 33px;
     display: flex;
     justify-content: center;
     border-radius: 8px;
