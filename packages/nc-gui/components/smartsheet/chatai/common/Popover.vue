@@ -39,7 +39,7 @@ const handleClickChange = (visible: boolean) => {
     @visibleChange="handleClickChange"
   >
     <template #content>
-      <a-list size="small" :data-source="chataiData.checkedModelData">
+      <a-list size="small" class="model-selected-list" :data-source="chataiData.checkedModelData">
         <template #renderItem="{ item, index }">
           <a-list-item v-if="!item?.fields || item.fields.length === 0">
             <div class="model-item">
@@ -48,7 +48,7 @@ const handleClickChange = (visible: boolean) => {
           </a-list-item>
           <a-popover v-else placement="right" :overlayClassName="'chatai2-tooltip'" color="white">
             <template #content>
-              <a-list size="small" :data-source="item.fields">
+              <a-list size="small" :data-source="item.fields" class="model-selected-list">
                 <template #renderItem="{ item }">
                   <a-list-item>
                     <span> {{ item.fieldName }}</span>
@@ -78,6 +78,26 @@ const handleClickChange = (visible: boolean) => {
 </template>
 
 <style lang="scss">
+.model-selected-list {
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #c1c1c1;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(168, 168, 168);
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    // background-color: #e0e0e0;
+    // border-radius: 10px;
+  }
+}
 .model-item {
   width: 100%;
   display: flex;
@@ -123,7 +143,7 @@ const handleClickChange = (visible: boolean) => {
 
 .chatai2-tooltip {
   .ant-popover-inner {
-    min-width: 180px;
+    min-width: 232px;
   }
   .ant-popover-arrow {
     display: none;
