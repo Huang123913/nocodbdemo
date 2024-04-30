@@ -32,9 +32,12 @@ onMounted(() => {
 // 是否可以反选
 const isCanResverSession = computed(() => {
   if (isShowModelResult.value) {
-    return searchModelResult.value.some((item) => checkedKeys.value.includes(item.id))
+    return (
+      searchModelResult.value.some((item) => checkedKeys.value.includes(item.id)) &&
+      !searchModelResult.value.every((item) => checkedKeys.value.includes(item.id))
+    )
   } else {
-    return checkedKeys.value.length
+    return checkedKeys.value.length && chataiData.value.modelData.length !== checkedKeys.value.length
   }
 })
 
