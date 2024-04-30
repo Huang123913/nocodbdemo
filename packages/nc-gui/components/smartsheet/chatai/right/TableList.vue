@@ -279,7 +279,7 @@ const handleEdit = (value: boolean) => {
           class="ant-table-striped"
           :columns="columns"
           :data-source="tableData"
-          :scroll="{ x: tableHeight, y: tableHeight }"
+          :scroll="{ y: tableHeight }"
         >
           <template #headerCell="{ title, column }">
             <a-tooltip :title="column.name_en" :overlayClassName="'reverse-selection-tip'">
@@ -406,6 +406,24 @@ const handleEdit = (value: boolean) => {
     border-right: none;
     box-sizing: border-box;
     overflow: hidden;
+    .ant-table-body {
+      &::-webkit-scrollbar {
+        width: 6px;
+        height: 5px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background-color: #c1c1c1;
+        border-radius: 10px;
+      }
+      &::-webkit-scrollbar-thumb:hover {
+        background-color: rgb(168, 168, 168);
+        border-radius: 10px;
+      }
+      &::-webkit-scrollbar-track {
+        background-color: #e0e0e0;
+        border-radius: 10px;
+      }
+    }
     .ant-table-cell {
       border-color: rgb(205, 215, 225);
       color: rgb(50, 56, 62) !important;
