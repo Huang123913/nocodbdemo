@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { watch, watchEffect } from '#imports'
 import axios from 'axios'
 
 import { EditOutlined } from '@ant-design/icons-vue'
@@ -13,6 +14,11 @@ const selectedKeys = ref<string[]>([]) //勾选的模型
 const isEdited = ref<boolean>(false)
 const editText = ref<string>('')
 const expandedKeys = ref<string[]>([])
+const elementRef = ref(null)
+const tableWidth = ref<number>(0)
+const tableHeight = ref<number>(0)
+const elementRef1 = ref(null)
+const myTable = ref(null)
 
 const isShow = computed(() => {
   return chataiData.value.sessionItem?.sql
@@ -28,6 +34,7 @@ const columns = computed(() => {
       title: item.name_cn ?? item.name ?? item.code,
       dataIndex: item.name ?? item.code,
       name_en: item.name ?? item.code,
+      width: 'fit-content',
     }
   })
   return newFileds
@@ -41,6 +48,48 @@ const tableData = computed(() => {
     return newItem
   })
   return newDatas
+})
+
+// const resizeObserver = new ResizeObserver((entries) => {
+//   // 当尺寸发生变化时更新宽度值
+//   for (const entry of entries) {
+//     if (entry.target === elementRef.value) {
+//       tableWidth.value = entry.contentRect.width
+//     }
+//   }
+//   console.log('tableWidth.value', tableWidth.value)
+// })
+
+const resizeObserver1 = new ResizeObserver((entries) => {
+  // 当尺寸发生变化时更新宽度值
+  for (const entry of entries) {
+    if (entry.target === elementRef1.value) {
+      tableWidth.value = parseInt(entry.contentRect.width)
+      tableHeight.value = parseInt(entry.contentRect.height)
+    }
+  }
+  if (myTable.value) {
+    const headerElement = myTable.value.$el.querySelector('.ant-table-thead')
+    if (headerElement) {
+      const height = headerElement.clientHeight
+      tableHeight.value = parseInt(tableHeight.value) - parseInt(height)
+    }
+  }
+})
+
+onMounted(() => {
+  tableWidth.value = parseInt(elementRef1.value.clientWidth)
+  tableHeight.value = parseInt(elementRef1.value.clientHeight)
+  if (myTable.value) {
+    const headerElement = myTable.value.$el.querySelector('.ant-table-thead')
+    if (headerElement) {
+      const height = headerElement.clientHeight
+      tableHeight.value = parseInt(tableHeight.value) - parseInt(height)
+    }
+  }
+  // 监听元素的尺寸变化
+  // resizeObserver.observe(elementRef.value)
+  resizeObserver1.observe(elementRef1.value)
 })
 
 const filterCatalog = (data: any[], key: string) => {
@@ -194,7 +243,7 @@ const handleEdit = (value: boolean) => {
 <template>
   <div style="width: 50%; position: relative; overflow: hidden; height: 100%">
     <SmartsheetChataiLeftModel />
-    <div class="table-list-content" v-show="isShow">
+    <div class="table-list-content" v-show="isShow" ref="elementRef">
       <div class="table-list-header">
         <div class="table-list-header-left">
           <a-typography-text class="list-item-left-content-textAreaValue">
@@ -223,8 +272,15 @@ const handleEdit = (value: boolean) => {
         <a-button class="save-btn" type="primary" size="middle" @click="handleSaveBtn()"> 发布 </a-button>
       </div>
       <!-- 表格数据 -->
-      <div class="table-data">
-        <a-table :pagination="false" class="ant-table-striped" :columns="columns" :data-source="tableData" :scroll="{ y: 500 }">
+      <div class="table-data" ref="elementRef1">
+        <a-table
+          ref="myTable"
+          :pagination="false"
+          class="ant-table-striped"
+          :columns="columns"
+          :data-source="tableData"
+          :scroll="{ x: tableHeight, y: tableHeight }"
+        >
           <template #headerCell="{ title, column }">
             <a-tooltip :title="column.name_en" :overlayClassName="'reverse-selection-tip'">
               <span style="cursor: default">{{ title }}</span>
@@ -279,6 +335,24 @@ const handleEdit = (value: boolean) => {
     top: 32px !important;
     right: 15px;
   }
+  .ant-modal-footer {
+    .ant-btn {
+      border-radius: 0.5rem;
+      color: rgb(55, 65, 81);
+      font-weight: 550;
+      &:hover {
+        background-color: rgba(244, 244, 245);
+        border-color: rgba(231, 231, 233);
+      }
+    }
+    .ant-btn-primary {
+      color: white;
+      border: none;
+      &:hover {
+        background-color: rgba(41, 82, 204);
+      }
+    }
+  }
 }
 
 .catalog {
@@ -330,6 +404,7 @@ const handleEdit = (value: boolean) => {
     margin-top: 20px;
     border: 1px solid rgb(205, 215, 225);
     border-right: none;
+    box-sizing: border-box;
     overflow: hidden;
     .ant-table-cell {
       border-color: rgb(205, 215, 225);
