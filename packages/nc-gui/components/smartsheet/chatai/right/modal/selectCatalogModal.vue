@@ -52,7 +52,7 @@ const hanldeAfterClose = () => {
 </script>
 
 <template>
-  <a-modal class="catalog-modal" title="选择模型目录" :visible="visible" :afterClose="hanldeAfterClose">
+  <a-modal class="catalog-modal" title="选择模型目录" :visible="visible" :afterClose="hanldeAfterClose" @cancel="handleCancel">
     <a-tree
       class="catalog"
       blockNode
