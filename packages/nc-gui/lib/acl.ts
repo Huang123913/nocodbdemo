@@ -79,6 +79,7 @@ const rolePermissions = {
       baseRename: true,
       baseDuplicate: true,
       sourceCreate: true,
+      tableCreateByAi: true,
     },
   },
   [ProjectRoles.EDITOR]: {

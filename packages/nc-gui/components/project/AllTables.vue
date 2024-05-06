@@ -101,12 +101,22 @@ const openChatAi = async () => {
         'pointer-events-none': base?.isLoading,
       }"
     >
-      <div
+      <!-- <div
         v-if="isUIAllowed('tableCreate')"
         role="button"
         class="nc-base-view-all-table-btn"
         data-testid="proj-view-btn__add-new-table"
         @click="openTableCreateDialog()"
+      >
+        <GeneralIcon icon="addOutlineBox" />
+        <div class="label">{{ $t('general.new') }} {{ $t('objects.table') }}</div>
+      </div> -->
+      <div
+        v-if="isUIAllowed('tableCreateByAi')"
+        role="button"
+        class="nc-base-view-all-table-btn"
+        data-testid="proj-view-btn__add-new-table"
+        @click="openChatAi()"
       >
         <GeneralIcon icon="addOutlineBox" />
         <div class="label">{{ $t('general.new') }} {{ $t('objects.table') }}</div>
@@ -142,16 +152,6 @@ const openChatAi = async () => {
           <div class="label">{{ $t('labels.connectDataSource') }}</div>
         </div>
       </component>
-      <div
-        v-if="isUIAllowed('tableCreate')"
-        role="button"
-        class="nc-base-view-all-table-btn"
-        data-testid="proj-view-btn__add-new-table"
-        @click="openChatAi()"
-      >
-        <GeneralIcon icon="addOutlineBox" />
-        <div class="label">{{ $t('general.new') }} {{ $t('objects.table') }} By Ai</div>
-      </div>
     </div>
 
     <div

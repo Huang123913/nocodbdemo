@@ -1,8 +1,9 @@
-import { isString } from '@vue/shared'
-import type { Roles, RolesObj, WorkspaceUserRoles } from 'nocodb-sdk'
-import { extractRolesObj } from 'nocodb-sdk'
 import type { Permission } from '#imports'
 import { computed, createSharedComposable, rolePermissions, useApi, useGlobal } from '#imports'
+import type { Roles, RolesObj, WorkspaceUserRoles } from 'nocodb-sdk'
+import { extractRolesObj } from 'nocodb-sdk'
+
+import { isString } from '@vue/shared'
 
 const hasPermission = (role: Exclude<Roles, WorkspaceUserRoles>, hasRole: boolean, permission: Permission | string) => {
   const rolePermission = rolePermissions[role]
@@ -143,9 +144,19 @@ export const useRoles = createSharedComposable(() => {
       checkRoles = extractRolesObj(roles)
     }
 
-    return Object.entries(checkRoles).some(([role, hasRole]) =>
+    let returnValue = Object.entries(checkRoles).some(([role, hasRole]) =>
       hasPermission(role as Exclude<Roles, WorkspaceUserRoles>, hasRole, permission),
     )
+    if (
+      typeof permission === 'string' &&
+      ['tableCreate', 'sourceCreate'].includes(permission) &&
+      Object.keys(args).length === 0
+    ) {
+      let port = window.location?.port
+      let host = window.location.hostname
+      returnValue = !(port === '7071' || host === 'smartdata.yindangu.com')
+    }
+    return returnValue
   }
 
   return { allRoles, orgRoles, workspaceRoles, baseRoles, loadRoles, isUIAllowed }
