@@ -948,7 +948,7 @@
       "lockedFieldTooltip": "预填值"
     },
     "getPreFilledLink": "获取预填链接",
-    "group": "Group"
+    "group": "分组"
   },
   "tooltip": {
     "reachedSourceLimit": "暂时只限于一个数据源",
