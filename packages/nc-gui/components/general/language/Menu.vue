@@ -21,7 +21,7 @@ async function changeLanguage(lang: string) {
 </script>
 
 <template>
-  <a-menu-item class="group rounded-md !my-0.5">
+  <!-- <a-menu-item class="group rounded-md !my-0.5">
     <a
       href="https://docs.nocodb.com/engineering/translation/#how-to-contribute--for-community-members"
       target="_blank"
@@ -30,7 +30,7 @@ async function changeLanguage(lang: string) {
     >
       {{ $t('activity.translate') }}
     </a>
-  </a-menu-item>
+  </a-menu-item> -->
 
   <a-menu-item
     v-for="[key, lang] of languages"
