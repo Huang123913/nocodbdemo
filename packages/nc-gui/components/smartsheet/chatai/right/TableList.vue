@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { watch, watchEffect } from '#imports'
 import axios from 'axios'
 
 import { EditOutlined } from '@ant-design/icons-vue'
@@ -9,16 +8,17 @@ import { useChataiStore } from '../../../../store/chatai'
 const store = useChataiStore()
 const { chataiData } = storeToRefs(store)
 const { getCustomCatalogEntityTree, setSessionItem } = store
-const showModal = ref<boolean>(false)
-const selectedKeys = ref<string[]>([]) //勾选的模型
+
+const isShowSelectCatalogModal = ref<boolean>(false) //是否显示选择目录弹框
 const isEdited = ref<boolean>(false)
 const editText = ref<string>('')
-const expandedKeys = ref<string[]>([])
 const elementRef = ref(null)
 const tableWidth = ref<number>(0)
 const tableHeight = ref<number>(0)
 const elementRef1 = ref(null)
 const myTable = ref(null)
+const updateTimeValue = ref<string>('realTimeView') //模型数据更新方式-默认实时视图
+const isShowLoading = ref<boolean>(false)
 
 const isShow = computed(() => {
   return chataiData.value.sessionItem?.sql
@@ -49,16 +49,6 @@ const tableData = computed(() => {
   })
   return newDatas
 })
-
-// const resizeObserver = new ResizeObserver((entries) => {
-//   // 当尺寸发生变化时更新宽度值
-//   for (const entry of entries) {
-//     if (entry.target === elementRef.value) {
-//       tableWidth.value = entry.contentRect.width
-//     }
-//   }
-//   console.log('tableWidth.value', tableWidth.value)
-// })
 
 const resizeObserver1 = new ResizeObserver((entries) => {
   // 当尺寸发生变化时更新宽度值
@@ -92,51 +82,26 @@ onMounted(() => {
   resizeObserver1.observe(elementRef1.value)
 })
 
-const filterCatalog = (data: any[], key: string) => {
-  const checkedNodes: any[] = []
-  const traverse = (nodes: any, key: string) => {
-    for (const node of nodes) {
-      if (node.key === key) {
-        checkedNodes.push(node)
-        return
-      }
-      node.children && traverse(node.children, key)
-    }
+const handleEdit = (value: boolean) => {
+  if (value) editText.value = chataiData.value.sessionItem.textAreaValue
+  isEdited.value = value
+  if (!value) {
+    let newResulr = { ...chataiData.value.sessionItem, textAreaValue: editText.value }
+    setSessionItem(newResulr)
   }
-  traverse(data, key)
-  return checkedNodes
 }
 
 // 发布按钮
-const handleSaveBtn = async () => {
-  expandedKeys.value = []
-  const findParanent = (data: any[]) => {
-    data.map((item) => {
-      if (item.children) {
-        expandedKeys.value.push(item.id)
-        findParanent(item.children)
-      }
-    })
-  }
-  findParanent(chataiData.value.modelCatalogTree)
-  console.log('chataiData.value.catalog', chataiData.value.modelCatalogTree)
-  showModal.value = true
+const handleSaveBtn = () => {
+  isShowSelectCatalogModal.value = true
 }
-const isShowLoading = ref<boolean>(false)
 
-const handleOk = async (e: MouseEvent) => {
-  if (!selectedKeys.value.length) {
-    message.warning('请选择模型目录')
-    return
-  }
-  showModal.value = false
+// 选择模型目录确定事件
+const handleOk = async (selectedCatalog: object) => {
+  isShowSelectCatalogModal.value = false
   isShowLoading.value = true
-  let selectedCatalog = filterCatalog(chataiData.value.modelCatalogTree, selectedKeys.value[0])
-  console.log('test', chataiData.value.sessionItem)
   let model = chataiData.value.sessionItem?.selectedModel ? JSON.parse(chataiData.value.sessionItem?.selectedModel) : []
   let tableData = chataiData.value.sessionItem?.tabledata.length ? JSON.parse(chataiData.value.sessionItem?.tabledata) : []
-  console.log('tableData', tableData.fields)
-  console.log('tableData', tableData.datas)
   let jsonValue = {
     sql: chataiData.value.sessionItem.sql,
   }
@@ -157,7 +122,7 @@ const handleOk = async (e: MouseEvent) => {
       name,
       code: name,
       name_cn: chataiData.value.sessionItem.textAreaValue,
-      belongCatalog: selectedCatalog[0].code,
+      belongCatalog: selectedCatalog.code,
       props: [
         {
           name: 'belongSQL',
@@ -230,13 +195,19 @@ const handleOk = async (e: MouseEvent) => {
   message.success('发布成功')
 }
 
-const handleEdit = (value: boolean) => {
-  if (value) editText.value = chataiData.value.sessionItem.textAreaValue
-  isEdited.value = value
-  if (!value) {
-    let newResulr = { ...chataiData.value.sessionItem, textAreaValue: editText.value }
-    setSessionItem(newResulr)
-  }
+// 选择模型目录取消事件
+const handleCancel = () => {
+  isShowSelectCatalogModal.value = false
+}
+
+// 设置模型数据更新频率
+const handleOkBySetUpdateTime = (value: string) => {
+  updateTimeValue.value = value
+  console.log('updateTimeValue', updateTimeValue.value)
+}
+
+const setUpdateTimeValue = (value: string) => {
+  updateTimeValue.value = value
 }
 </script>
 
@@ -288,29 +259,15 @@ const handleEdit = (value: boolean) => {
           </template>
         </a-table>
       </div>
-      <a-modal
-        class="catalog-modal"
-        v-model:visible="showModal"
-        title="选择模型目录"
-        @ok="handleOk"
-        cancelText="取消"
-        okText="确认"
-      >
-        <a-tree
-          blockNode
-          class="catalog"
-          :tree-data="chataiData.modelCatalogTree"
-          v-model:selectedKeys="selectedKeys"
-          v-model:expandedKeys="expandedKeys"
-        >
-          <template #title="item">
-            <span> {{ item.name_cn }}</span>
-          </template>
-        </a-tree>
-      </a-modal>
-
-      <SmartsheetChataiCommonLoading :isShow="isShowLoading" />
     </div>
+    <SmartsheetChataiRightModalSelectCatalogModal
+      :visible="isShowSelectCatalogModal"
+      :handleCancel="handleCancel"
+      :handleOk="handleOk"
+      :setUpdateTimeValue="setUpdateTimeValue"
+    />
+    <SmartsheetChataiRightModalSetModelDataUpdateTimeModal :handleOk="handleOkBySetUpdateTime" />
+    <SmartsheetChataiCommonLoading :isShow="isShowLoading" />
   </div>
 </template>
 
@@ -318,63 +275,7 @@ const handleEdit = (value: boolean) => {
 .ant-tree-switcher {
   top: -2px;
 }
-.catalog-modal {
-  .ant-modal-content {
-    padding: 16px 16px 0 16px !important;
-    .ant-modal-header {
-      padding: 16px 0 !important;
-    }
-    .ant-modal-body {
-      padding: 8px !important;
-    }
-    .ant-modal-footer {
-      padding: 16px;
-    }
-  }
-  .ant-modal-close {
-    top: 32px !important;
-    right: 15px;
-  }
-  .ant-modal-footer {
-    .ant-btn {
-      border-radius: 0.5rem;
-      color: rgb(55, 65, 81);
-      font-weight: 550;
-      &:hover {
-        background-color: rgba(244, 244, 245);
-        border-color: rgba(231, 231, 233);
-      }
-    }
-    .ant-btn-primary {
-      color: white;
-      border: none;
-      &:hover {
-        background-color: rgba(41, 82, 204);
-      }
-    }
-  }
-}
 
-.catalog {
-  height: 180px !important;
-  overflow-y: auto;
-  overflow-x: hidden;
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: #c1c1c1;
-    border-radius: 10px;
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(168, 168, 168);
-    border-radius: 10px;
-  }
-  &::-webkit-scrollbar-track {
-    background-color: #e0e0e0;
-    border-radius: 10px;
-  }
-}
 .table-list-content {
   width: 100%;
   height: 100%;

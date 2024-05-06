@@ -82,6 +82,7 @@ export enum SmartsheetStoreEvents {
   CLEAR_NEW_ROW = 'clear-new-row',
   DELETE_FILE = 'delete-file',
   DELETE_MODE = 'delete-model',
+  OPEN_SET_MODEL_DATA_UPDATE_TIME_MODAL = 'open-set-model-data-update-time-modal',
 }
 
 export enum DataSourcesSubTab {
