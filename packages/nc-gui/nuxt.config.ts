@@ -202,7 +202,7 @@ export default defineNuxtConfig({
       },
       proxy: {
         '/api/v0/test': {
-          target: 'https://c538-14-123-253-17.ngrok-free.app',
+          target: 'https://a7aa-14-123-254-4.ngrok-free.app',
           changeOrigin: true,
           secure: true,
           rewrite: (path) => {
@@ -224,7 +224,7 @@ export default defineNuxtConfig({
           },
         },
         '/api': {
-          target: 'http://smartdata-server.yindangu.com',
+          target: 'http://smartdata.yindangu.com',
           changeOrigin: true,
           secure: false,
         },

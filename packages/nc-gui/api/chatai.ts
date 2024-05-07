@@ -8,7 +8,7 @@ export interface ExeSqlParams {
 //获取sql
 const getSqlApi = async (question: string, id: string, modelrange: any[]) => {
   return await request.get('/api/v0/ask', {
-    baseURL: 'https://c538-14-123-253-17.ngrok-free.app',
+    baseURL: 'https://a7aa-14-123-254-4.ngrok-free.app',
     params: {
       question,
       id,
@@ -82,13 +82,13 @@ const generateDDL = async (entityIds: string) => {
 // 模型训练接口
 const trainModel = async (data: any) => {
   return await request.post(`/api/v0/train?${new URLSearchParams(data).toString()}`, {
-    baseURL: 'https://c538-14-123-253-17.ngrok-free.app',
+    baseURL: 'https://a7aa-14-123-254-4.ngrok-free.app',
   })
 }
 
 const repair = async (id: string, error_msg: string, question: string) => {
   return await request.get('/api/v0/repair', {
-    baseURL: 'https://c538-14-123-253-17.ngrok-free.app',
+    baseURL: 'https://a7aa-14-123-254-4.ngrok-free.app',
     params: {
       id,
       orgid: 1,

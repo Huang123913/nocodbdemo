@@ -16,7 +16,7 @@ const exeTrain = async (bizCatalogEntityCustom: any[]) => {
       if (ddl) {
         let ddlString = ddl?.join('\\')
         await axios.post(
-          `https://c538-14-123-253-17.ngrok-free.app/api/v0/train?ddl=${encodeURIComponent(ddlString)}&id=${
+          `https://a7aa-14-123-254-4.ngrok-free.app/api/v0/train?ddl=${encodeURIComponent(ddlString)}&id=${
             bizCatalogEntityCustom[i].id
           }&orgid=1&projectid=1`,
         )
@@ -30,7 +30,7 @@ onMounted(async () => {
     projectid: 1,
     types: JSON.stringify(['ddl', 'sqlquestion']),
   }
-  await axios.post(`https://c538-14-123-253-17.ngrok-free.app/api/v0/cleartrain?${new URLSearchParams(data).toString()}`)
+  await axios.post(`https://a7aa-14-123-254-4.ngrok-free.app/api/v0/cleartrain?${new URLSearchParams(data).toString()}`)
   let result = await axios.post('http://databoard-test.yindangu.com/webapi/ydg_vmcdm_custom_api/getCustomCatalogEntityTree', {
     data: {
       customGroupId: null,

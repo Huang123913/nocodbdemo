@@ -181,12 +181,12 @@ const handleOk = async (selectedCatalog: object) => {
     if (ddl) {
       let ddlString = ddl?.join('\\')
       await axios.post(
-        `https://c538-14-123-253-17.ngrok-free.app/api/v0/train?ddl=${encodeURIComponent(ddlString)}&id=${
+        `https://a7aa-14-123-254-4.ngrok-free.app/api/v0/train?ddl=${encodeURIComponent(ddlString)}&id=${
           chataiData.value.sessionItem.id
         }&orgid=1&projectid=1`,
       )
       await axios.post(
-        `https://c538-14-123-253-17.ngrok-free.app/api/v0/train?&id=${chataiData.value.sessionItem.id}&orgid=1&projectid=1&question=${chataiData.value.sessionItem?.tip}&sql=${chataiData.value.sessionItem?.sql}`,
+        `https://a7aa-14-123-254-4.ngrok-free.app/api/v0/train?&id=${chataiData.value.sessionItem.id}&orgid=1&projectid=1&question=${chataiData.value.sessionItem?.tip}&sql=${chataiData.value.sessionItem?.sql}`,
       )
     }
     await getCustomCatalogEntityTree()
