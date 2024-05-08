@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import axios from 'axios'
 
-import { EditOutlined } from '@ant-design/icons-vue'
+import { CloseOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons-vue'
 
+import chataiApi from '../../../../api/chatai'
 import { useChataiStore } from '../../../../store/chatai'
 
 const store = useChataiStore()
@@ -19,6 +20,31 @@ const elementRef1 = ref(null)
 const myTable = ref(null)
 const updateTimeValue = ref<string>('realTimeView') //模型数据更新方式-默认实时视图
 const isShowLoading = ref<boolean>(false)
+const isPublishCatalog = ref<boolean>(true) //是否发布至模型目录
+const targetField = ref<any[]>([]) //目标字段
+const dropVisible = ref<boolean>(false)
+const searchModel = ref<string>('')
+const searchModelRes = ref<any[]>([])
+const isShowSearchModelRes = ref<boolean>(false)
+const existingModelData = ref<any[]>([])
+const existingModelField = ref<{
+  [key: string]: any
+}>({})
+
+onMounted(() => {
+  tableWidth.value = parseInt(elementRef1.value.clientWidth)
+  tableHeight.value = parseInt(elementRef1.value.clientHeight)
+  if (myTable.value) {
+    const headerElement = myTable.value.$el.querySelector('.ant-table-thead')
+    if (headerElement) {
+      const height = headerElement.clientHeight
+      tableHeight.value = parseInt(tableHeight.value) - parseInt(height)
+    }
+  }
+  resizeObserver1.observe(elementRef1.value)
+  // TODO 获取现有模型
+  // existingModelData.value =
+})
 
 const isShow = computed(() => {
   return chataiData.value.sessionItem?.sql
@@ -35,6 +61,8 @@ const columns = computed(() => {
       dataIndex: item.name ?? item.code,
       name_en: item.name ?? item.code,
       width: 'fit-content',
+      value: item.name,
+      label: item.name,
     }
   })
   return newFileds
@@ -67,21 +95,6 @@ const resizeObserver1 = new ResizeObserver((entries) => {
   }
 })
 
-onMounted(() => {
-  tableWidth.value = parseInt(elementRef1.value.clientWidth)
-  tableHeight.value = parseInt(elementRef1.value.clientHeight)
-  if (myTable.value) {
-    const headerElement = myTable.value.$el.querySelector('.ant-table-thead')
-    if (headerElement) {
-      const height = headerElement.clientHeight
-      tableHeight.value = parseInt(tableHeight.value) - parseInt(height)
-    }
-  }
-  // 监听元素的尺寸变化
-  // resizeObserver.observe(elementRef.value)
-  resizeObserver1.observe(elementRef1.value)
-})
-
 const handleEdit = (value: boolean) => {
   if (value) editText.value = chataiData.value.sessionItem.textAreaValue
   isEdited.value = value
@@ -94,108 +107,115 @@ const handleEdit = (value: boolean) => {
 // 发布按钮
 const handleSaveBtn = () => {
   isShowSelectCatalogModal.value = true
+  isPublishCatalog.value = true
+  dropVisible.value = false
 }
 
-// 选择模型目录确定事件
+// 选择模型目录弹框确定事件
 const handleOk = async (selectedCatalog: object) => {
   isShowSelectCatalogModal.value = false
   isShowLoading.value = true
-  let model = chataiData.value.sessionItem?.selectedModel ? JSON.parse(chataiData.value.sessionItem?.selectedModel) : []
-  let tableData = chataiData.value.sessionItem?.tabledata.length ? JSON.parse(chataiData.value.sessionItem?.tabledata) : []
-  let jsonValue = {
-    sql: chataiData.value.sessionItem.sql,
-  }
-  let jsonValue1 = {
-    question: chataiData.value.sessionItem.tip,
-  }
-  let fields: any[] = []
-  model.map((item) => {
-    fields.push(...item.fields)
-  })
-  fields = fields.map((item, index) => {
-    return { ...item, id: `${Date.now()}${index}` }
-  })
-  let name = `query_entity_${Date.now()}`
-  let entities = [
-    {
-      id: `${Date.now()}`,
-      name,
-      code: name,
-      name_cn: chataiData.value.sessionItem.textAreaValue,
-      belongCatalog: selectedCatalog.code,
-      props: [
-        {
-          name: 'belongSQL',
-          code: 'belongSQL',
-          jsonValue: JSON.stringify(jsonValue),
-        },
-        {
-          name: 'belongQuestion',
-          code: 'belongQuestion',
-          jsonValue: JSON.stringify(jsonValue1),
-        },
-      ],
-      fields,
-    },
-  ]
-  // 保存模型
-  let saveBizCustomEntity = await axios.post(
-    'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/saveBizCustomEntity',
-    {
-      entities: entities,
-    },
-  )
-  let entity = saveBizCustomEntity?.data.data.data?.insert?.entity
-  if (!entity) entity = saveBizCustomEntity?.data.data.data?.update?.entity
-  if (entity) {
-    let entityIds = entity.map((item) => item.id).join(',')
-    // 发布模型
-    let generateMDTableResutl = await axios.post(
-      'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/generateMDTable',
+  if (isPublishCatalog.value) {
+    let model = chataiData.value.sessionItem?.selectedModel ? JSON.parse(chataiData.value.sessionItem?.selectedModel) : []
+    let tableData = chataiData.value.sessionItem?.tabledata.length ? JSON.parse(chataiData.value.sessionItem?.tabledata) : []
+    let jsonValue = {
+      sql: chataiData.value.sessionItem.sql,
+    }
+    let jsonValue1 = {
+      question: chataiData.value.sessionItem.tip,
+    }
+    let fields: any[] = []
+    model.map((item) => {
+      fields.push(...item.fields)
+    })
+    fields = fields.map((item, index) => {
+      return { ...item, id: `${Date.now()}${index}` }
+    })
+    let name = `query_entity_${Date.now()}`
+    let entities = [
       {
-        entityIds,
+        id: `${Date.now()}`,
+        name,
+        code: name,
+        name_cn: chataiData.value.sessionItem.textAreaValue,
+        belongCatalog: selectedCatalog.code,
+        props: [
+          {
+            name: 'belongSQL',
+            code: 'belongSQL',
+            jsonValue: JSON.stringify(jsonValue),
+          },
+          {
+            name: 'belongQuestion',
+            code: 'belongQuestion',
+            jsonValue: JSON.stringify(jsonValue1),
+          },
+        ],
+        fields,
+      },
+    ]
+    // 保存模型
+    let saveBizCustomEntity = await axios.post(
+      'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/saveBizCustomEntity',
+      {
+        entities: entities,
       },
     )
-    console.log('generateMDTableResutl::', generateMDTableResutl)
-    let tableInfo = generateMDTableResutl?.data?.data?.tableInfo[0]
-    if (tableInfo) {
-      let datas = tableData.datas.map((item, index) => {
-        return { ...item, id: `${Date.now()}${index}` }
-      })
-      let batchInsertOrUpdate = await axios.post(
-        `http://databoard-test.yindangu.com/restapi/bizentity/data/${tableInfo.componentCode}/${tableInfo.tableName}/batchInsertOrUpdate`,
+    let entity = saveBizCustomEntity?.data.data.data?.insert?.entity
+    if (!entity) entity = saveBizCustomEntity?.data.data.data?.update?.entity
+    if (entity) {
+      let entityIds = entity.map((item) => item.id).join(',')
+      // 发布模型
+      let generateMDTableResutl = await axios.post(
+        'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/generateMDTable',
         {
-          datas: datas,
+          entityIds,
         },
       )
-    }
-    // 生成ddl
-    let generateDDL = await axios.post(
-      'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/generateDDL',
-      {
-        entityIds: entityIds,
-        detail: false,
-      },
-    )
-    let ddl = generateDDL?.data?.data?.ddl
-    if (ddl) {
-      let ddlString = ddl?.join('\\')
-      await axios.post(
-        `https://a7aa-14-123-254-4.ngrok-free.app/api/v0/train?ddl=${encodeURIComponent(ddlString)}&id=${
-          chataiData.value.sessionItem.id
-        }&orgid=1&projectid=1`,
+      console.log('generateMDTableResutl::', generateMDTableResutl)
+      let tableInfo = generateMDTableResutl?.data?.data?.tableInfo[0]
+      if (tableInfo) {
+        let datas = tableData.datas.map((item, index) => {
+          return { ...item, id: `${Date.now()}${index}` }
+        })
+        let batchInsertOrUpdate = await axios.post(
+          `http://databoard-test.yindangu.com/restapi/bizentity/data/${tableInfo.componentCode}/${tableInfo.tableName}/batchInsertOrUpdate`,
+          {
+            datas: datas,
+          },
+        )
+      }
+      // 生成ddl
+      let generateDDL = await axios.post(
+        'http://databoard-test.yindangu.com/webapi/innersysapi/VMcdmDataServiceWebApi/generateDDL',
+        {
+          entityIds: entityIds,
+          detail: false,
+        },
       )
-      await axios.post(
-        `https://a7aa-14-123-254-4.ngrok-free.app/api/v0/train?&id=${chataiData.value.sessionItem.id}&orgid=1&projectid=1&question=${chataiData.value.sessionItem?.tip}&sql=${chataiData.value.sessionItem?.sql}`,
-      )
+      let ddl = generateDDL?.data?.data?.ddl
+      if (ddl) {
+        let ddlString = ddl?.join('\\')
+        await axios.post(
+          `https://a7aa-14-123-254-4.ngrok-free.app/api/v0/train?ddl=${encodeURIComponent(ddlString)}&id=${
+            chataiData.value.sessionItem.id
+          }&orgid=1&projectid=1`,
+        )
+        await axios.post(
+          `https://a7aa-14-123-254-4.ngrok-free.app/api/v0/train?&id=${chataiData.value.sessionItem.id}&orgid=1&projectid=1&question=${chataiData.value.sessionItem?.tip}&sql=${chataiData.value.sessionItem?.sql}`,
+        )
+      }
+      await getCustomCatalogEntityTree()
     }
-    await getCustomCatalogEntityTree()
+  } else {
+    //TODO 发布至现有模型
   }
+
   isShowLoading.value = false
   message.success('发布成功')
 }
 
-// 选择模型目录取消事件
+// 选择模型目录弹框取消事件
 const handleCancel = () => {
   isShowSelectCatalogModal.value = false
 }
@@ -209,10 +229,49 @@ const handleOkBySetUpdateTime = (value: string) => {
 const setUpdateTimeValue = (value: string) => {
   updateTimeValue.value = value
 }
+
+const handleSelectExistingModel = async (item: any) => {
+  if (existingModelField.value.hasOwnProperty(item.id)) {
+    targetField.value = existingModelField.value[item.id]
+  } else {
+    isShowLoading.value = true
+    let questionRes: any = await chataiApi.findBizCustomEntity(item.id).catch((err) => {
+      isShowLoading.value = false
+    })
+    if (questionRes?.success) {
+      targetField.value = questionRes?.data?.datas[0].fields.map((item: any) => {
+        return { ...item, value: item.fieldName, label: item.fieldName }
+      })
+      existingModelField.value[item.id] = targetField.value
+    }
+    isShowLoading.value = false
+  }
+  isShowSelectCatalogModal.value = true
+  isPublishCatalog.value = false
+  dropVisible.value = false
+}
+
+//搜索现有模型
+const handleSearchModel = () => {
+  if (!searchModel.value.trim()) {
+    handleClickCleanBtn()
+  } else {
+    isShowSearchModelRes.value = true
+    searchModelRes.value = existingModelData.value.filter((item: any) => {
+      return item.name_cn.indexOf(searchModel.value) > -1
+    })
+  }
+}
+
+const handleClickCleanBtn = () => {
+  searchModel.value = ''
+  isShowSearchModelRes.value = false
+}
 </script>
 
 <template>
   <div style="width: 50%; position: relative; overflow: hidden; height: 100%">
+    <!-- 选择范围 -->
     <SmartsheetChataiLeftModel />
     <div class="table-list-content" v-show="isShow" ref="elementRef">
       <div class="table-list-header">
@@ -240,7 +299,41 @@ const setUpdateTimeValue = (value: string) => {
             {{ chataiData.sessionItem?.sql }}
           </a-typography-text>
         </div>
-        <a-button class="save-btn" type="primary" size="middle" @click="handleSaveBtn()"> 发布 </a-button>
+        <!-- <a-button class="save-btn" type="primary" size="middle" @click="handleSaveBtn()"> 发布 </a-button> -->
+        <a-dropdown :trigger="['click']" placement="bottom" overlay-class-name="publish-model" v-model:visible="dropVisible">
+          <NcButton class="!bg-primary !border-none !mr-3 ml-3" size="small">
+            <span class="text-sm font-weight-medium">发布至</span>
+            <mdi-menu-down />
+          </NcButton>
+          <template #overlay>
+            <div class="bg-white !border">
+              <a-menu>
+                <a-menu-item :key="1" @click="handleSaveBtn"> 模型目录 </a-menu-item>
+                <a-sub-menu :key="2" title="现有模型" :disabled="!columns.length || !existingModelData.length">
+                  <!-- 搜索框 -->
+                  <div class="search-existing-model">
+                    <a-input placeholder="搜索模型" v-model:value="searchModel" @keyup.enter="handleSearchModel()">
+                      <template #suffix>
+                        <CloseOutlined @click="handleClickCleanBtn()" v-show="searchModel.trim()" style="margin-right: 5px" />
+                        <search-outlined @click="handleSearchModel()" />
+                      </template>
+                    </a-input>
+                  </div>
+                  <!-- 现有模型列表 -->
+                  <div class="existing-model">
+                    <a-menu-item
+                      v-for="item in isShowSearchModelRes ? searchModelRes : existingModelData"
+                      :key="item.id"
+                      @click="handleSelectExistingModel(item)"
+                      >{{ item.name_cn }}</a-menu-item
+                    >
+                    <div class="no-data" v-if="isShowSearchModelRes && searchModelRes.length === 0">暂无数据</div>
+                  </div>
+                </a-sub-menu>
+              </a-menu>
+            </div>
+          </template>
+        </a-dropdown>
       </div>
       <!-- 表格数据 -->
       <div class="table-data" ref="elementRef1">
@@ -260,12 +353,17 @@ const setUpdateTimeValue = (value: string) => {
         </a-table>
       </div>
     </div>
+    <!-- 模型目录/字段映射弹框 -->
     <SmartsheetChataiRightModalSelectCatalogModal
       :visible="isShowSelectCatalogModal"
       :handleCancel="handleCancel"
       :handleOk="handleOk"
       :setUpdateTimeValue="setUpdateTimeValue"
+      :isCatalog="isPublishCatalog"
+      :targetField="targetField"
+      :sourceField="columns"
     />
+    <!-- 定时更新弹框 -->
     <SmartsheetChataiRightModalSetModelDataUpdateTimeModal :handleOk="handleOkBySetUpdateTime" />
     <SmartsheetChataiCommonLoading :isShow="isShowLoading" />
   </div>
@@ -274,6 +372,75 @@ const setUpdateTimeValue = (value: string) => {
 <style lang="scss">
 .ant-tree-switcher {
   top: -2px;
+}
+.existing-model {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #c1c1c1;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(168, 168, 168);
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: #e0e0e0;
+    border-radius: 10px;
+  }
+  .ant-menu-sub {
+    border-radius: 5px;
+  }
+  .no-data {
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.25);
+    font-size: 14px;
+  }
+  .ant-menu-item {
+    margin-bottom: 0 !important;
+  }
+  .ant-menu-item:not(:last-child) {
+    margin-top: 0 !important;
+  }
+}
+
+.publish-model {
+  width: 130px !important;
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  .ant-menu-item,
+  .ant-menu-submenu {
+    height: 35px;
+    display: flex;
+    align-items: center;
+  }
+  .ant-menu-item {
+    margin-top: 8px !important;
+  }
+  .ant-menu-submenu {
+    margin-bottom: 8px !important;
+  }
+  .ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
+    background-color: transparent !important;
+  }
+  .ant-menu-item-selected {
+    background-color: transparent !important;
+  }
+  .ant-menu-item-selected,
+  .ant-menu-item-selected a,
+  .ant-menu-item-selected a:hover {
+    color: rgba(0, 0, 0, 0.85);
+  }
+  .ant-menu-submenu-title {
+    height: 31px !important;
+    line-height: 31px !important;
+  }
 }
 
 .table-list-content {
@@ -385,6 +552,34 @@ const setUpdateTimeValue = (value: string) => {
         flex: 1;
       }
     }
+  }
+  .nc-button.ant-btn.small {
+    padding-left: 14px;
+    padding-right: 10px;
+    background-color: #0b6bcb !important;
+  }
+}
+
+.search-existing-model {
+  width: 100%;
+  padding: 10px 16px 16px;
+  overflow: hidden;
+  box-sizing: border-box;
+  .ant-input-affix-wrapper {
+    border-radius: 5px;
+    width: 240px;
+  }
+  .ant-input-affix-wrapper {
+    box-sizing: border-box;
+    border: 1px solid rgb(217, 217, 217) !important;
+  }
+  .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover {
+    box-shadow: none;
+  }
+  .ant-input-affix-wrapper-focused,
+  .ant-input-affix-wrapper:focus {
+    box-shadow: none !important;
+    border-color: rgb(51, 102, 255) !important;
   }
 }
 </style>
