@@ -53,6 +53,7 @@ const isShow = computed(() => {
 const columns = computed(() => {
   if (!chataiData.value.sessionItem?.sql) return []
   let result = JSON.parse(chataiData.value.sessionItem.tabledata).fields
+  if (!result) return []
   let fileds = result?.filter((item) => item.name !== 'id')
   let newFileds = fileds?.map((item) => {
     return {
@@ -71,6 +72,7 @@ const columns = computed(() => {
 const tableData = computed(() => {
   if (!chataiData.value.sessionItem?.sql) return []
   let result = JSON.parse(chataiData.value.sessionItem.tabledata).datas
+  if (!result) return []
   let newDatas = result?.map((item) => {
     let newItem = { ...item }
     return newItem

@@ -148,15 +148,19 @@ const handleSend = async () => {
     }
     sql = sql.replace(/;/g, '')
     let queryBizCustomEntityData = await chataiApi.exeSql({ sql }).catch((err) => (isShowLoading.value = false))
-    if (!queryBizCustomEntityData?.success || !queryBizCustomEntityData?.data.success) {
-      let err_msg = queryBizCustomEntityData?.success
-        ? queryBizCustomEntityData?.data.errorDetail
-        : queryBizCustomEntityData?.data.errorDetail.allStackMsg
-      let newExeRes = await callRepairWithRetry(sqlId, err_msg, textAreaValue.value)
-      if (!newExeRes?.success || !newExeRes?.data.success) {
+    if (!queryBizCustomEntityData?.success || !queryBizCustomEntityData?.data?.success) {
+      if (queryBizCustomEntityData?.exceptionType && queryBizCustomEntityData?.exceptionType.indexOf('VSQL') > -1) {
         message.warning('抱歉，我不能理解你的问题，请调整后再重试')
+      } else {
+        let err_msg = queryBizCustomEntityData?.success
+          ? queryBizCustomEntityData?.data.errorDetail
+          : queryBizCustomEntityData?.data.errorDetail.allStackMsg
+        let newExeRes = await callRepairWithRetry(sqlId, err_msg, textAreaValue.value)
+        if (!newExeRes?.success || !newExeRes?.data.success) {
+          message.warning('抱歉，我不能理解你的问题，请调整后再重试')
+        }
+        queryBizCustomEntityData = newExeRes
       }
-      queryBizCustomEntityData = newExeRes
     }
     if (queryBizCustomEntityData?.data) {
       let fields = queryBizCustomEntityData?.data?.fields
