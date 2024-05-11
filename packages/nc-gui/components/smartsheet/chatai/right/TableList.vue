@@ -131,12 +131,18 @@ const handleOk = async (selectedCatalog: object) => {
     let jsonValue1 = {
       question: chataiData.value.sessionItem.tip,
     }
+    let tableFields = tableData.fields ? tableData.fields : []
     let fields: any[] = []
-    model.map((item) => {
-      fields.push(...item.fields)
-    })
-    fields = fields.map((item, index) => {
-      return { ...item, id: `${Date.now()}${index}` }
+    fields = tableFields.map((item) => {
+      return {
+        id: uuidv4(),
+        fieldCode: item.code,
+        fieldName: item.name,
+        fieldName_cn: item.name_cn || item.name,
+        fieldSysDataType: item.sysDataType,
+        fieldPrecision: item.fieldPrecision,
+        scale: item.scale,
+      }
     })
     let name = `query_entity_${Date.now()}`
     let entities = [
