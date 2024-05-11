@@ -102,6 +102,13 @@ const repair = async (id: string, error_msg: string, question: string) => {
   })
 }
 
+// 获取模型对应的物理表信息
+const findMDTableInfo = async (entityIds: string) => {
+  return await request.post('/webapi/innersysapi/VMcdmDataServiceWebApi/findMDTableInfo', {
+    entityIds: entityIds,
+  })
+}
+
 export default {
   batchInsertOrUpdate,
   exeSql,
@@ -113,4 +120,5 @@ export default {
   saveModel,
   trainModel,
   repair,
+  findMDTableInfo,
 }

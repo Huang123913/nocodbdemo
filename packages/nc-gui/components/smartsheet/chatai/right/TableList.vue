@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import axios from 'axios'
+import { v4 as uuidv4 } from 'uuid'
 
 import { CloseOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons-vue'
 
@@ -26,10 +27,10 @@ const dropVisible = ref<boolean>(false)
 const searchModel = ref<string>('')
 const searchModelRes = ref<any[]>([])
 const isShowSearchModelRes = ref<boolean>(false)
-const existingModelData = ref<any[]>([])
 const existingModelField = ref<{
   [key: string]: any
 }>({})
+const selectPublishMode = ref<object>({})
 
 onMounted(() => {
   tableWidth.value = parseInt(elementRef1.value.clientWidth)
@@ -80,6 +81,10 @@ const tableData = computed(() => {
   return newDatas
 })
 
+const existingModelData = computed(() => {
+  return chataiData.value.modelData.filter((item) => !item.isCatalog)
+})
+
 const resizeObserver1 = new ResizeObserver((entries) => {
   // 当尺寸发生变化时更新宽度值
   for (const entry of entries) {
@@ -117,9 +122,9 @@ const handleSaveBtn = () => {
 const handleOk = async (selectedCatalog: object) => {
   isShowSelectCatalogModal.value = false
   isShowLoading.value = true
+  let tableData = chataiData.value.sessionItem?.tabledata.length ? JSON.parse(chataiData.value.sessionItem?.tabledata) : []
   if (isPublishCatalog.value) {
     let model = chataiData.value.sessionItem?.selectedModel ? JSON.parse(chataiData.value.sessionItem?.selectedModel) : []
-    let tableData = chataiData.value.sessionItem?.tabledata.length ? JSON.parse(chataiData.value.sessionItem?.tabledata) : []
     let jsonValue = {
       sql: chataiData.value.sessionItem.sql,
     }
@@ -174,13 +179,12 @@ const handleOk = async (selectedCatalog: object) => {
           entityIds,
         },
       )
-      console.log('generateMDTableResutl::', generateMDTableResutl)
       let tableInfo = generateMDTableResutl?.data?.data?.tableInfo[0]
       if (tableInfo) {
         let datas = tableData.datas.map((item, index) => {
           return { ...item, id: `${Date.now()}${index}` }
         })
-        let batchInsertOrUpdate = await axios.post(
+        await axios.post(
           `http://databoard-test.yindangu.com/restapi/bizentity/data/${tableInfo.componentCode}/${tableInfo.tableName}/batchInsertOrUpdate`,
           {
             datas: datas,
@@ -207,12 +211,33 @@ const handleOk = async (selectedCatalog: object) => {
           `https://a7aa-14-123-254-4.ngrok-free.app/api/v0/train?&id=${chataiData.value.sessionItem.id}&orgid=1&projectid=1&question=${chataiData.value.sessionItem?.tip}&sql=${chataiData.value.sessionItem?.sql}`,
         )
       }
-      await getCustomCatalogEntityTree()
     }
   } else {
-    //TODO 发布至现有模型
+    //发布至现有模型
+    let insertData: any[] = []
+    tableData.datas.map((item: any) => {
+      let data: {
+        [key: string]: any
+      } = {}
+      for (const key in selectedCatalog) {
+        if (selectedCatalog.hasOwnProperty(key)) {
+          data[key] = selectedCatalog[key] ? item[selectedCatalog[key]] : null
+        }
+      }
+      insertData.push({ ...data, id: uuidv4() })
+    })
+    let tableInfoRes = await chataiApi.findMDTableInfo(selectPublishMode.value.id)
+    let tableInfo = tableInfoRes?.data?.datas[0]
+    if (tableInfo) {
+      let insertRes = await axios.post(
+        `http://databoard-test.yindangu.com/restapi/bizentity/data/${tableInfo.componentCode}/${tableInfo.tableName}/batchInsertOrUpdate`,
+        {
+          datas: insertData,
+        },
+      )
+    }
   }
-
+  await getCustomCatalogEntityTree()
   isShowLoading.value = false
   message.success('发布成功')
 }
@@ -233,6 +258,7 @@ const setUpdateTimeValue = (value: string) => {
 }
 
 const handleSelectExistingModel = async (item: any) => {
+  selectPublishMode.value = item
   if (existingModelField.value.hasOwnProperty(item.id)) {
     targetField.value = existingModelField.value[item.id]
   } else {
@@ -311,7 +337,7 @@ const handleClickCleanBtn = () => {
             <div class="bg-white !border">
               <a-menu>
                 <a-menu-item :key="1" @click="handleSaveBtn"> 模型目录 </a-menu-item>
-                <a-sub-menu :key="2" title="现有模型" :disabled="!columns.length || !existingModelData.length">
+                <a-sub-menu :key="2" title="现有模型">
                   <!-- 搜索框 -->
                   <div class="search-existing-model">
                     <a-input placeholder="搜索模型" v-model:value="searchModel" @keyup.enter="handleSearchModel()">

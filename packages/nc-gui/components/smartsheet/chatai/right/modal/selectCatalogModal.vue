@@ -51,8 +51,9 @@ const handleModalOk = () => {
     props.handleOk(selectedCatalog)
   } else {
     props.targetField.map((item: any) => {
-      if (!fieldMappingResult.value.hasOwnProperty(item.id)) fieldMappingResult.value[item.id] = [item, null]
+      if (!fieldMappingResult.value.hasOwnProperty(item.fieldName)) fieldMappingResult.value[item.fieldName] = null
     })
+    console.log('fieldMappingResult.value', fieldMappingResult.value)
     props.handleOk(fieldMappingResult.value)
   }
 }
@@ -72,8 +73,9 @@ const handleSelectSourceField = (option: any, targetFieldItem: any) => {
     message.warning('目标字段类型为number,来源目标字段类型与之不匹配')
     return
   }
-  fieldMappingResult.value[targetFieldItem.id] = [targetFieldItem, option]
-  selectValue.value[targetFieldItem.id] = option.value
+  console.log('option', option)
+  fieldMappingResult.value[targetFieldItem.fieldName] = option ? option.name : ''
+  selectValue.value[targetFieldItem.id] = option ? option.name : ''
 }
 </script>
 
@@ -107,6 +109,7 @@ const handleSelectSourceField = (option: any, targetFieldItem: any) => {
         <div class="input">{{ item.fieldName }}</div>
         <a-select
           class="select"
+          :allowClear="!!(selectValue.hasOwnProperty(item.id) && selectValue[item.id])"
           :value="selectValue.hasOwnProperty(item.id) ? selectValue[item.id] : ''"
           :options="sourceField"
           @change="(value: string, option: any)=>{handleSelectSourceField(option,item)}"
@@ -124,7 +127,6 @@ const handleSelectSourceField = (option: any, targetFieldItem: any) => {
           :allowClear="true"
           :options="selectOption"
           @change="handleChange"
-          @focus="handleFocus"
         ></a-select>
       </div>
       <div>
